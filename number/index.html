@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生命灵数计算</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;900&family=Noto+Serif+JP:wght@400;600;900&display=swap" rel="stylesheet">
+<style>
+  @property --bg { syntax: "<color>"; inherits: true; initial-value: #0f0d1a; }
+  @property --bg-2 { syntax: "<color>"; inherits: true; initial-value: #1a1630; }
+  @property --card-border { syntax: "<color>"; inherits: true; initial-value: rgba(232, 200, 140, 0.2); }
+  @property --text { syntax: "<color>"; inherits: true; initial-value: #ece6f5; }
+  @property --muted { syntax: "<color>"; inherits: true; initial-value: #a59fb8; }
+  @property --gold { syntax: "<color>"; inherits: true; initial-value: #e8c88c; }
+  @property --gold-strong { syntax: "<color>"; inherits: true; initial-value: #f3d9a4; }
+  @property --accent { syntax: "<color>"; inherits: true; initial-value: #9b7be0; }
+  @property --ok { syntax: "<color>"; inherits: true; initial-value: #8fd6b4; }
+  @property --warn { syntax: "<color>"; inherits: true; initial-value: #e79a9a; }
+  @property --glow-1 { syntax: "<color>"; inherits: true; initial-value: rgba(155, 123, 224, 0.18); }
+  @property --glow-2 { syntax: "<color>"; inherits: true; initial-value: rgba(243, 217, 164, 0.10); }
+  @property --aurora-1 { syntax: "<color>"; inherits: true; initial-value: #5b3fa8; }
+  @property --aurora-2 { syntax: "<color>"; inherits: true; initial-value: #8a6a2e; }
+  @property --aurora-3 { syntax: "<color>"; inherits: true; initial-value: #2e3f8a; }
+  @property --orb-glow { syntax: "<color>"; inherits: true; initial-value: rgba(232, 200, 140, 0.25); }
+  @property --orb-ring { syntax: "<color>"; inherits: true; initial-value: rgba(232, 200, 140, 0.35); }
+  @property --tag-tint { syntax: "<color>"; inherits: true; initial-value: rgba(232, 200, 140, 0.07); }
+  @property --orb-inner { syntax: "<color>"; inherits: true; initial-value: rgba(243, 217, 164, 0.35); }
+  :root {
+    --bg: #0f0d1a;
+    --bg-2: #1a1630;
+    --card-border: rgba(232, 200, 140, 0.2);
+    --text: #ece6f5;
+    --muted: #a59fb8;
+    --gold: #e8c88c;
+    --gold-strong: #f3d9a4;
+    --accent: #9b7be0;
+    --ok: #8fd6b4;
+    --warn: #e79a9a;
+    --glow-1: rgba(155, 123, 224, 0.18);
+    --glow-2: rgba(243, 217, 164, 0.10);
+    --aurora-1: #5b3fa8;
+    --aurora-2: #8a6a2e;
+    --aurora-3: #2e3f8a;
+    --orb-glow: rgba(232, 200, 140, 0.25);
+    --orb-ring: rgba(232, 200, 140, 0.35);
+    --tag-tint: rgba(232, 200, 140, 0.07);
+    --orb-inner: rgba(243, 217, 164, 0.35);
+    --radius: 18px;
+    transition: --bg 1.4s ease, --bg-2 1.4s ease, --card-border 1.4s ease, --text 1.4s ease, --muted 1.4s ease, --gold 1.4s ease, --gold-strong 1.4s ease, --accent 1.4s ease, --ok 1.4s ease, --warn 1.4s ease, --glow-1 1.4s ease, --glow-2 1.4s ease, --aurora-1 1.4s ease, --aurora-2 1.4s ease, --aurora-3 1.4s ease, --orb-glow 1.4s ease, --orb-ring 1.4s ease, --tag-tint 1.4s ease, --orb-inner 1.4s ease;
+  }
+  /* 每个生命灵数对应一套配色：1 红 · 2 橙 · 3 黄 · 4 绿 · 5 蓝 · 6 靛 · 7 紫 · 8 粉 · 9 金 */
+  [data-theme="1"] { --bg: #170b0b; --bg-2: #261111; --card-border: rgba(240, 140, 126, 0.2); --text: #f8ecea; --muted: #c9a19c; --gold: #f08c7e; --gold-strong: #ffc2b8; --accent: #f0b46c; --ok: #8fd6b4; --warn: #e79a9a; --glow-1: rgba(240, 140, 126, 0.16); --glow-2: rgba(255, 194, 184, 0.10); --aurora-1: #8a2a22; --aurora-2: #c2483a; --aurora-3: #6a1e1e; --orb-glow: rgba(240, 140, 126, 0.25); --orb-ring: rgba(240, 140, 126, 0.35); --tag-tint: rgba(240, 140, 126, 0.07); --orb-inner: rgba(255, 194, 184, 0.35); }
+  [data-theme="2"] { --bg: #170f08; --bg-2: #26180d; --card-border: rgba(245, 166, 106, 0.2); --text: #f8efe6; --muted: #c9ac92; --gold: #f5a66a; --gold-strong: #ffd2ae; --accent: #f0d07a; --ok: #8fd6b4; --warn: #e79a9a; --glow-1: rgba(245, 166, 106, 0.16); --glow-2: rgba(255, 210, 174, 0.10); --aurora-1: #8a4a1e; --aurora-2: #c8722e; --aurora-3: #6a3a18; --orb-glow: rgba(245, 166, 106, 0.25); --orb-ring: rgba(245, 166, 106, 0.35); --tag-tint: rgba(245, 166, 106, 0.07); --orb-inner: rgba(255, 210, 174, 0.35); }
+  [data-theme="3"] { --bg: #15130a; --bg-2: #221f0f; --card-border: rgba(236, 215, 110, 0.2); --text: #f7f4e4; --muted: #c4bc8e; --gold: #ecd76e; --gold-strong: #fff0a8; --accent: #b8e07a; --ok: #8fd6b4; --warn: #e79a9a; --glow-1: rgba(236, 215, 110, 0.16); --glow-2: rgba(255, 240, 168, 0.10); --aurora-1: #7a6a1a; --aurora-2: #b09a2a; --aurora-3: #5a4e16; --orb-glow: rgba(236, 215, 110, 0.25); --orb-ring: rgba(236, 215, 110, 0.35); --tag-tint: rgba(236, 215, 110, 0.07); --orb-inner: rgba(255, 240, 168, 0.35); }
+  [data-theme="4"] { --bg: #0a1410; --bg-2: #0f1f18; --card-border: rgba(126, 214, 160, 0.2); --text: #e9f5ee; --muted: #93b0a1; --gold: #7ed6a0; --gold-strong: #a8eac6; --accent: #5fd6c6; --ok: #8fd6b4; --warn: #e79a9a; --glow-1: rgba(126, 214, 160, 0.16); --glow-2: rgba(168, 234, 198, 0.10); --aurora-1: #1f6b47; --aurora-2: #3f9c6a; --aurora-3: #245c45; --orb-glow: rgba(126, 214, 160, 0.25); --orb-ring: rgba(126, 214, 160, 0.35); --tag-tint: rgba(126, 214, 160, 0.07); --orb-inner: rgba(168, 234, 198, 0.35); }
+  [data-theme="5"] { --bg: #0a1218; --bg-2: #0f1e28; --card-border: rgba(127, 198, 240, 0.2); --text: #e8f2f8; --muted: #97b4c6; --gold: #7fc6f0; --gold-strong: #b8e4ff; --accent: #5fd6c6; --ok: #8fd6b4; --warn: #e79a9a; --glow-1: rgba(127, 198, 240, 0.16); --glow-2: rgba(184, 228, 255, 0.10); --aurora-1: #1e5a8a; --aurora-2: #3a7ac6; --aurora-3: #1e4a6a; --orb-glow: rgba(127, 198, 240, 0.25); --orb-ring: rgba(127, 198, 240, 0.35); --tag-tint: rgba(127, 198, 240, 0.07); --orb-inner: rgba(184, 228, 255, 0.35); }
+  [data-theme="6"] { --bg: #0c0d1c; --bg-2: #14163a; --card-border: rgba(154, 166, 245, 0.2); --text: #eceefa; --muted: #a3a8c9; --gold: #9aa6f5; --gold-strong: #ccd2ff; --accent: #f0a8d0; --ok: #8fd6b4; --warn: #e79a9a; --glow-1: rgba(154, 166, 245, 0.16); --glow-2: rgba(204, 210, 255, 0.10); --aurora-1: #2e3490; --aurora-2: #4a52c0; --aurora-3: #22266a; --orb-glow: rgba(154, 166, 245, 0.25); --orb-ring: rgba(154, 166, 245, 0.35); --tag-tint: rgba(154, 166, 245, 0.07); --orb-inner: rgba(204, 210, 255, 0.35); }
+  [data-theme="7"] { --bg: #120c1a; --bg-2: #1e1430; --card-border: rgba(196, 154, 240, 0.2); --text: #f2eafa; --muted: #b7a3c9; --gold: #c49af0; --gold-strong: #e6ccff; --accent: #8fd0e8; --ok: #8fd6b4; --warn: #e79a9a; --glow-1: rgba(196, 154, 240, 0.16); --glow-2: rgba(230, 204, 255, 0.10); --aurora-1: #5a2e90; --aurora-2: #8a4ac0; --aurora-3: #3e2270; --orb-glow: rgba(196, 154, 240, 0.25); --orb-ring: rgba(196, 154, 240, 0.35); --tag-tint: rgba(196, 154, 240, 0.07); --orb-inner: rgba(230, 204, 255, 0.35); }
+  [data-theme="8"] { --bg: #160c12; --bg-2: #24121e; --card-border: rgba(244, 169, 207, 0.2); --text: #f8ecef; --muted: #c9a0b2; --gold: #f4a9cf; --gold-strong: #ffd0e6; --accent: #a98fe0; --ok: #8fd6b4; --warn: #e79a9a; --glow-1: rgba(244, 169, 207, 0.16); --glow-2: rgba(255, 208, 230, 0.10); --aurora-1: #8a2e5a; --aurora-2: #c65a8a; --aurora-3: #6a2e5c; --orb-glow: rgba(244, 169, 207, 0.25); --orb-ring: rgba(244, 169, 207, 0.35); --tag-tint: rgba(244, 169, 207, 0.07); --orb-inner: rgba(255, 208, 230, 0.35); }
+  [data-theme="9"] { --bg: #16120a; --bg-2: #241c10; --card-border: rgba(240, 198, 116, 0.2); --text: #f6efe2; --muted: #c9b78f; --gold: #f0c674; --gold-strong: #ffe1a8; --accent: #e8945a; --ok: #8fd6b4; --warn: #e79a9a; --glow-1: rgba(240, 198, 116, 0.16); --glow-2: rgba(255, 225, 168, 0.10); --aurora-1: #8a5a1e; --aurora-2: #c68a3a; --aurora-3: #6a4a1e; --orb-glow: rgba(240, 198, 116, 0.25); --orb-ring: rgba(240, 198, 116, 0.35); --tag-tint: rgba(240, 198, 116, 0.07); --orb-inner: rgba(255, 225, 168, 0.35); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse at 20% 0%, var(--glow-1), transparent 55%),
+      radial-gradient(ellipse at 90% 30%, var(--glow-2), transparent 50%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+  html[lang="ja"] body { font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif; }
+  .topbar { position: absolute; top: 16px; left: 16px; right: 16px; z-index: 2; display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+  .lang { display: flex; border: 1px solid var(--card-border); border-radius: 999px; overflow: hidden; background: rgba(0,0,0,0.25); }
+  .lang button { font-family: inherit; font-size: 13px; color: var(--muted); background: none; border: none; padding: 5px 14px; cursor: pointer; letter-spacing: 0.05em; }
+  .lang button.on { background: var(--gold); color: #241a08; font-weight: 600; }
+  .aurora { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .aurora div { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .45; }
+  .aurora .a1 { width: 60vmax; height: 60vmax; left: -20vmax; top: -25vmax; background: var(--aurora-1); animation: drift1 26s ease-in-out infinite alternate; }
+  .aurora .a2 { width: 50vmax; height: 50vmax; right: -18vmax; top: 20vh; background: var(--aurora-2); opacity: .3; animation: drift2 32s ease-in-out infinite alternate; }
+  .aurora .a3 { width: 45vmax; height: 45vmax; left: 20vw; bottom: -25vmax; background: var(--aurora-3); animation: drift3 28s ease-in-out infinite alternate; }
+  @keyframes drift1 { to { transform: translate(12vw, 10vh) scale(1.1); } }
+  @keyframes drift2 { to { transform: translate(-10vw, 15vh) scale(.9); } }
+  @keyframes drift3 { to { transform: translate(-8vw, -12vh) scale(1.15); } }
+  @media (prefers-reduced-motion: reduce) { .aurora div { animation: none; } }
+  .wrap { position: relative; z-index: 1; max-width: 880px; margin: 0 auto; padding: 48px 16px 80px; }
+
+  header { text-align: center; margin-bottom: 36px; }
+  .eyebrow { letter-spacing: 0.4em; color: var(--gold); font-size: 13px; text-transform: uppercase; }
+  h1 { font-size: clamp(34px, 7vw, 54px); font-weight: 900; letter-spacing: 0.08em; margin: 8px 0 10px;
+       background: linear-gradient(120deg, var(--gold-strong), #fff 50%, var(--gold)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { color: var(--muted); font-size: 15px; }
+
+  .card { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius);
+          padding: 28px; backdrop-filter: blur(6px); margin-bottom: 22px; }
+
+  .form { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; justify-content: center; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 13px; color: var(--muted); letter-spacing: 0.1em; }
+  .field input, .field select {
+    font-family: inherit; font-size: 18px; color: var(--text);
+    background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 12px;
+    padding: 10px 14px; outline: none; transition: border-color .2s;
+  }
+  .field input { width: 110px; }
+  .field select { width: 92px; }
+  .field input:focus, .field select:focus { border-color: var(--gold); }
+  button.go {
+    font-family: inherit; font-size: 17px; font-weight: 600; letter-spacing: 0.2em;
+    color: #241a08; background: linear-gradient(135deg, var(--gold-strong), var(--gold));
+    border: none; border-radius: 12px; padding: 12px 28px; cursor: pointer;
+    box-shadow: 0 6px 24px var(--orb-glow); transition: transform .15s, box-shadow .2s;
+  }
+  button.go:hover { transform: translateY(-1px); box-shadow: 0 8px 30px var(--orb-glow); }
+  .err { color: var(--warn); text-align: center; margin-top: 14px; font-size: 14px; min-height: 1em; }
+
+  #result { display: none; }
+  #result.show { display: block; animation: rise .6s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+  .hero { display: grid; grid-template-columns: auto 1fr; gap: 28px; align-items: center; }
+  .orb {
+    width: 170px; height: 170px; border-radius: 50%; position: relative;
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    background: radial-gradient(circle at 35% 30%, var(--orb-inner), var(--orb-glow) 55%, rgba(0,0,0,0.2));
+    border: 1px solid var(--gold); box-shadow: 0 0 60px var(--orb-glow), inset 0 0 40px rgba(255,255,255,0.06);
+  }
+  .orb::before { content: ""; position: absolute; inset: -10px; border-radius: 50%; border: 1px dashed var(--orb-ring); animation: spin 40s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .orb .num { font-size: 76px; font-weight: 900; line-height: 1; color: var(--gold-strong); }
+  .orb .lbl { font-size: 12px; color: var(--muted); letter-spacing: 0.3em; margin-top: 6px; }
+  .hero h2 { font-size: 28px; letter-spacing: 0.05em; }
+  .hero h2 small { font-size: 15px; color: var(--gold); font-weight: 400; margin-left: 8px; }
+  .chain { color: var(--muted); font-size: 14px; margin: 4px 0 12px; font-variant-numeric: tabular-nums; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag { font-size: 13px; padding: 3px 12px; border-radius: 999px; border: 1px solid var(--card-border); color: var(--gold-strong); background: var(--tag-tint); }
+  .master { margin-top: 12px; font-size: 14px; color: var(--accent); }
+  .color-note { margin-top: 10px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .color-note::before { content: ""; width: 14px; height: 14px; border-radius: 4px; background: linear-gradient(135deg, var(--gold-strong), var(--gold)); flex: none; }
+  @media (max-width: 720px) { .color-note { justify-content: center; } }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 24px; }
+  .stat { background: rgba(0,0,0,0.22); border-radius: 14px; padding: 14px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+  .stat .v { font-size: 30px; font-weight: 900; color: var(--gold-strong); line-height: 1.2; }
+  .stat .k { font-size: 13px; color: var(--muted); }
+  .stat .d { font-size: 12px; color: var(--muted); opacity: .8; margin-top: 4px; line-height: 1.5; }
+
+  h3.sec { font-size: 20px; letter-spacing: 0.1em; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  h3.sec::before { content: "✦"; color: var(--gold); font-size: 14px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .block { background: rgba(0,0,0,0.2); border-radius: 14px; padding: 16px 18px; border-left: 3px solid var(--gold); }
+  .block h4 { font-size: 15px; color: var(--gold); margin-bottom: 4px; letter-spacing: 0.08em; }
+  .block p { font-size: 15px; color: var(--text); }
+  .block.wide { grid-column: 1 / -1; }
+
+  .chart-wrap { display: grid; grid-template-columns: minmax(0, 300px) 1fr; gap: 28px; align-items: start; }
+  .chart { position: relative; width: 100%; max-width: 300px; aspect-ratio: 1 / 1; }
+  .chart svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .cells { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); }
+  .cell { display: flex; align-items: center; justify-content: center; }
+  .cell span {
+    width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column;
+    font-size: 26px; font-weight: 900; position: relative; z-index: 2;
+    background: var(--bg-2); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.25);
+  }
+  .cell span.on { border-color: var(--gold); color: var(--gold-strong); box-shadow: 0 0 22px var(--orb-glow); }
+  .cell span i { font-style: normal; font-size: 11px; font-weight: 400; color: var(--muted); line-height: 1; margin-top: 2px; }
+  .chart line { stroke: var(--gold); stroke-width: 3; stroke-linecap: round; opacity: .75; stroke-dasharray: 300; stroke-dashoffset: 300; animation: draw 1s ease forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .item { padding: 10px 14px; border-radius: 12px; background: rgba(0,0,0,0.2); font-size: 14px; }
+  .item b { color: var(--gold-strong); margin-right: 6px; }
+  .item.miss b { color: var(--warn); }
+  .item.many b { color: var(--accent); }
+  .muted { color: var(--muted); font-size: 14px; }
+  .subhead { font-size: 15px; color: var(--gold); margin: 18px 0 8px; letter-spacing: 0.08em; }
+  .subhead:first-child { margin-top: 0; }
+
+  .year-bar { display: flex; gap: 6px; margin: 14px 0 6px; }
+  .year-bar div { flex: 1; text-align: center; padding: 6px 0; border-radius: 8px; background: rgba(0,0,0,0.25); font-size: 14px; color: var(--muted); }
+  .year-bar div.cur { background: linear-gradient(135deg, var(--gold-strong), var(--gold)); color: #241a08; font-weight: 900; }
+
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 30px; opacity: .7; }
+
+  @media (max-width: 720px) {
+    .card { padding: 20px 16px; }
+    .hero { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+    .tags { justify-content: center; }
+    .stats { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .chart-wrap { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+    .chart-wrap > div:last-child { width: 100%; }
+    .field input { width: 92px; }
+    .field select { width: 80px; }
+  }
+  @media (max-width: 480px) {
+    .topbar { position: relative; top: 0; left: 0; right: 0; flex-wrap: wrap; justify-content: center; padding: 12px 16px 0; }
+    .wrap { padding-top: 28px; }
+    .cell span { width: 54px; height: 54px; font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="aurora"><div class="a1"></div><div class="a2"></div><div class="a3"></div></div>
+<div class="topbar">
+<div class="lang" role="group" aria-label="Language">
+  <button data-lang="zh">中文</button><button data-lang="ja">日本語</button><button data-lang="en">English</button>
+</div>
+</div>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Numerology</div>
+    <h1 data-i18n="h1"></h1>
+    <p class="sub" data-i18n="sub"></p>
+  </header>
+
+  <section class="card">
+    <div class="form">
+      <div class="field"><label for="y" data-i18n="y"></label><input id="y" type="number" inputmode="numeric" placeholder="1995" min="1900" max="2100"></div>
+      <div class="field"><label for="m" data-i18n="m"></label><select id="m"></select></div>
+      <div class="field"><label for="d" data-i18n="d"></label><select id="d"></select></div>
+      <button class="go" id="go" data-i18n="go"></button>
+    </div>
+    <div class="err" id="err"></div>
+  </section>
+
+  <div id="result">
+    <section class="card">
+      <div class="hero">
+        <div class="orb"><div class="num" id="lifeNum"></div><div class="lbl" data-i18n="lifeLbl"></div></div>
+        <div>
+          <h2 id="title"></h2>
+          <div class="chain" id="chain"></div>
+          <div class="tags" id="tags"></div>
+          <div class="master" id="master"></div>
+          <div class="color-note" id="colorNote"></div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="v" id="talent"></div><div class="k" data-i18n="talentK"></div><div class="d" data-i18n="talentD"></div></div>
+        <div class="stat"><div class="v" id="bday"></div><div class="k" data-i18n="bdayK"></div><div class="d" id="bdayDesc"></div></div>
+        <div class="stat"><div class="v" id="pyear"></div><div class="k" id="pyearK"></div><div class="d" id="pyearDesc"></div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3 class="sec" data-i18n="secAnalysis"></h3>
+      <div class="grid-2" id="analysis"></div>
+    </section>
+
+    <section class="card">
+      <h3 class="sec" data-i18n="secChart"></h3>
+      <div class="chart-wrap">
+        <div class="chart">
+          <svg viewBox="0 0 300 300" id="lines"></svg>
+          <div class="cells" id="cells"></div>
+        </div>
+        <div>
+          <div class="subhead" data-i18n="hLines"></div>
+          <div class="list" id="lineList"></div>
+          <div class="subhead" data-i18n="hMiss"></div>
+          <div class="list" id="missList"></div>
+          <div class="subhead" data-i18n="hMany"></div>
+          <div class="list" id="manyList"></div>
+        </div>
+      </div>
+      <p class="muted" style="margin-top:16px" data-i18n="chartNote"></p>
+    </section>
+
+    <section class="card">
+      <h3 class="sec" data-i18n="secYear"></h3>
+      <div class="year-bar" id="yearBar"></div>
+      <div class="block wide" style="margin-top:12px"><h4 id="yearTitle"></h4><p id="yearText"></p></div>
+    </section>
+  </div>
+
+  <footer data-i18n="footer"></footer>
+</div>
+
+<script>
+const I18N = {
+  zh: {
+    colorNote: c => `你的灵数代表色：${c}，页面已换上你的专属配色`, colors: ["热情红", "暖阳橙", "明亮黄", "翡翠绿", "海洋蓝", "靛青", "神秘紫", "玫瑰粉", "流金"],
+    htmlLang: "zh-CN", docTitle: "生命灵数计算",
+    h1: "生命灵数", sub: "输入你的公历出生日期，解读属于你的生命密码",
+    y: "年", m: "月", d: "日", go: "开始解读",
+    monthOpt: n => n + " 月", dayOpt: n => n + " 日",
+    errYear: max => `请输入 1900 – ${max} 之间的年份`, errFuture: "出生日期不能晚于今天哦",
+    lifeLbl: "生命灵数", title: (n, name) => `${n} 号人 <small>${name}</small>`, chain: "计算过程：",
+    talentK: "天赋数", talentD: "出生日期各位数字相加之和，代表与生俱来的潜能",
+    bdayK: "生日数", pyearK: y => `${y} 流年数`,
+    blocks: ["性格特质", "天赋优势", "成长挑战", "事业方向", "感情关系", "给你的建议"],
+    secAnalysis: "性格解读", secChart: "生命密码九宫格",
+    hLines: "已连成的线", hMiss: "空缺数字", hMany: "重复出现的数字",
+    noLines: "暂无连线。没有连线并不代表能力不足，而是潜能更多需要后天开发。",
+    noMiss: "九个数字齐全，能量均衡，非常难得！",
+    noMany: "没有出现 3 次及以上的数字，各项特质较为平均。",
+    missLbl: n => `缺 ${n}`, lineLbl: (name, ns) => `${name}（${ns}）`,
+    chartNote: "九宫格中的数字来自：出生日期各位数字 + 天赋数 + 生命灵数（0 不计入）。圆圈下方小字为出现次数。",
+    secYear: "流年运势", yearTitle: (y, n, t) => `${y} 年 · 流年 ${n}：${t}`,
+    footer: "生命灵数源自毕达哥拉斯数字学，内容仅供娱乐与自我探索参考"
+  },
+  en: {
+    colorNote: c => `Your number's color: ${c} — the page now wears your personal palette`, colors: ["Passion Red", "Sunset Orange", "Bright Yellow", "Emerald Green", "Ocean Blue", "Indigo", "Mystic Purple", "Rose Pink", "Radiant Gold"],
+    htmlLang: "en", docTitle: "Life Number Calculator",
+    h1: "Life Path Number", sub: "Enter your Gregorian date of birth to decode your life's numbers",
+    y: "Year", m: "Month", d: "Day", go: "Read My Numbers",
+    monthOpt: n => ["January","February","March","April","May","June","July","August","September","October","November","December"][n - 1],
+    dayOpt: n => String(n),
+    errYear: max => `Please enter a year between 1900 – ${max}`, errFuture: "The date of birth must be before today",
+    lifeLbl: "Life Path", title: (n, name) => `${name} — Number ${n}`, chain: "Calculation:",
+    talentK: "Talents", talentD: "Sum of all digits of your birth date, representing innate potential",
+    bdayK: "Birthday Number", pyearK: y => `${y} Personal Year`,
+    blocks: ["Personality", "Strengths", "Challenges", "Career", "Love & Relationships", "Advice For You"],
+    secAnalysis: "Personality Reading", secChart: "Life Grid (9 Cells)",
+    hLines: "Connected Lines", hMiss: "Missing Numbers", hMany: "Repeating Numbers",
+    noLines: "No lines connected. This doesn't mean a lack of ability — it means more potential to develop.",
+    noMiss: "All nine numbers are present, energy is balanced, which is quite rare!",
+    noMany: "No number appears three or more times; your traits are fairly well balanced.",
+    missLbl: n => `Missing ${n}`, lineLbl: (name, ns) => `${name} (${ns})`,
+    chartNote: "The grid numbers come from: birth date digits + talents + life path number (0 is not counted). The small text below each circle shows how many times it appears.",
+    secYear: "Personal Year", yearTitle: (y, n, t) => `${y} · Personal Year ${n}: ${t}`,
+    footer: "Life Path Number derives from Pythagorean numerology. Content is for entertainment and self-exploration only"
+  },
+  ja: {
+    colorNote: c => `あなたのナンバーカラー：${c}。ページをあなた専用の配色に変えました`, colors: ["パッションレッド", "サンセットオレンジ", "ブライトイエロー", "エメラルドグリーン", "オーシャンブルー", "インディゴ", "ミスティックパープル", "ローズピンク", "ゴールド"],
+    htmlLang: "ja", docTitle: "数秘術ライフパス",
+    h1: "数秘術", sub: "生年月日（西暦）を入力して、あなたのライフパスナンバーを読み解きましょう",
+    y: "年", m: "月", d: "日", go: "占う",
+    monthOpt: n => n + "月", dayOpt: n => n + "日",
+    errYear: max => `1900〜${max} の年を入力してください`, errFuture: "生年月日は今日より前の日付にしてください",
+    lifeLbl: "ライフパス", title: (n, name) => `ナンバー ${n} <small>${name}</small>`, chain: "計算過程：",
+    talentK: "天賦数", talentD: "生年月日の数字をすべて足した数。生まれ持った潜在能力を表します",
+    bdayK: "バースデーナンバー", pyearK: y => `${y}年 パーソナルイヤーナンバー`,
+    blocks: ["性格", "才能・強み", "課題", "仕事・適職", "恋愛・パートナーシップ", "あなたへのアドバイス"],
+    secAnalysis: "性格診断", secChart: "数字チャート（九マス）",
+    hLines: "つながったライン", hMiss: "欠けている数字", hMany: "繰り返し現れる数字",
+    noLines: "つながったラインはありません。能力が足りないのではなく、これから育てていける可能性が多いということです。",
+    noMiss: "1〜9 がすべて揃っています。エネルギーのバランスがとても良い、珍しいタイプです！",
+    noMany: "3 回以上現れる数字はありません。各資質がバランスよく分布しています。",
+    missLbl: n => `${n} なし`, lineLbl: (name, ns) => `${name}（${ns}）`,
+    chartNote: "チャートの数字は「生年月日の各数字 + 天賦数 + ライフパスナンバー」から取っています（0 は数えません）。円の下の小さな数字は出現回数です。",
+    secYear: "今年の運勢", yearTitle: (y, n, t) => `${y}年 · パーソナルイヤーナンバー ${n}：${t}`,
+    footer: "数秘術はピタゴラスの数秘学に由来します。内容は娯楽・自己探求のための参考です"
+  }
+};
+
+const DATA = {
+  zh: {
+    NUMS: {
+      1: { name: "开创者", kw: ["独立", "领导", "开拓", "自信"],
+        p: ["你天生带着一股向前冲的劲儿，喜欢自己做决定、走自己的路。你有很强的主见和行动力，往往是团队里第一个站出来的人，不太愿意活在别人的规则里。",
+            "目标感强、执行果断、敢于冒险，遇到困难时能独当一面，具有天然的领导魅力。",
+            "容易急躁、固执，有时听不进别人的意见；过于强调自我，可能让身边的人感到压力。",
+            "适合创业者、管理者、销售、自由职业等需要主动开拓、自主决策的领域。",
+            "在感情里你常是主导的一方，需要一个欣赏你、又能给你空间的伴侣。学会示弱与倾听，会让关系更亲密。",
+            "勇敢是你的天赋，耐心是你的功课。偶尔慢下来，合作会让你走得更远。"] },
+      2: { name: "协调者", kw: ["细腻", "合作", "温柔", "敏感"],
+        p: ["你温和、体贴，对他人的情绪有着敏锐的感知力。你喜欢和谐的氛围，擅长在人与人之间搭建桥梁，是很多人心中可靠的倾听者。",
+            "善解人意、耐心细致、擅长合作，能看见别人忽略的细节，是优秀的辅助与调解者。",
+            "容易犹豫不决、过度在意他人看法，有时会压抑自己的需求，内耗较多。",
+            "适合咨询、心理、人事、行政、设计、外交、教育等需要细心与沟通的工作。",
+            "你重视陪伴与安全感，是体贴的恋人。但要记得表达真实的感受，而不是一味迁就。",
+            "你的温柔很珍贵，但请先照顾好自己。学会说“不”，是你成长的开始。"] },
+      3: { name: "表达者", kw: ["创意", "乐观", "表达", "社交"],
+        p: ["你天生乐观开朗，脑子里总有新点子。你善于用语言、文字或艺术表达自己，走到哪里都能带来轻松愉快的气氛。",
+            "想象力丰富、口才好、富有幽默感，学习新事物快，具有感染他人的魅力。",
+            "兴趣广泛但容易三分钟热度，情绪起伏较大，有时缺乏耐心把事情做完。",
+            "适合创作、传媒、广告、演艺、教学、主持、自媒体等需要创意和表达的领域。",
+            "你浪漫又有趣，喜欢新鲜感。需要一个能欣赏你的天马行空、也能让你安定下来的伴侣。",
+            "把灵感落地，才是真正的才华。给自己一个坚持到底的项目吧。"] },
+      4: { name: "建设者", kw: ["务实", "稳定", "秩序", "可靠"],
+        p: ["你踏实、稳重，做事讲究计划与规则。你相信一步一个脚印，比起空想更看重实际成果，是身边人眼中最靠谱的存在。",
+            "责任心强、条理清晰、耐力惊人，擅长把复杂的事情拆解并稳稳落地。",
+            "可能过于保守、缺乏弹性，对变化有抵触，容易给自己太大压力。",
+            "适合工程、财务、法律、项目管理、技术研发、建筑等需要严谨与规划的领域。",
+            "你对感情专一认真，用行动而非甜言蜜语表达爱。适当增加一些浪漫与惊喜，会让对方更有感觉。",
+            "稳定是你的根基，但世界也需要你偶尔打破常规。允许自己犯一点错。"] },
+      5: { name: "自由者", kw: ["自由", "冒险", "变化", "好奇"],
+        p: ["你热爱自由、渴望体验，讨厌被束缚。你好奇心旺盛、适应力强，喜欢旅行、结识新朋友和尝试新事物，人生经历往往丰富多彩。",
+            "反应敏捷、多才多艺、沟通能力出色，在变化中如鱼得水，善于发现机会。",
+            "容易冲动、缺乏定性，可能难以长期专注于一件事或一段关系。",
+            "适合旅游、销售、市场、媒体、公关、贸易、自由职业等充满变化的领域。",
+            "你需要一段既有激情又不失自由的关系，最怕被控制。找到愿意和你一起探索世界的人最重要。",
+            "真正的自由来自内心的自律。在流动中找到属于自己的锚点。"] },
+      6: { name: "守护者", kw: ["责任", "爱心", "家庭", "美感"],
+        p: ["你有着强烈的责任感和爱心，总是愿意照顾身边的人。家庭和亲密关系对你极为重要，同时你也有不错的审美品味。",
+            "温暖可靠、富有同情心、乐于奉献，擅长营造和谐美好的环境。",
+            "容易过度付出、爱操心，有时会不自觉地想掌控他人，或因追求完美而焦虑。",
+            "适合医疗、护理、教育、社工、设计、餐饮、美容等服务与美感相关的领域。",
+            "你是天生的伴侣型人格，愿意为爱付出一切。但别忘了，爱也需要彼此的空间与尊重。",
+            "照顾别人之前，先把爱分一点给自己。放手，有时也是一种爱。"] },
+      7: { name: "探索者", kw: ["智慧", "内省", "分析", "神秘"],
+        p: ["你理性、深邃，喜欢追问事物背后的真相。你享受独处与思考，对知识、哲学或灵性领域有天然的兴趣，给人一种难以看透的神秘感。",
+            "洞察力强、逻辑缜密、专注度高，能在专业领域钻研得很深。",
+            "容易多疑、封闭，不太愿意敞开心扉，有时显得冷淡或孤僻。",
+            "适合科研、技术、分析、写作、哲学、心理学、玄学研究等需要深度思考的领域。",
+            "你慢热且挑剔，需要精神层面的共鸣。一旦认定对方，会非常深情。试着多分享你的内心世界。",
+            "信任是你最需要练习的功课——信任他人，也信任生命本身。"] },
+      8: { name: "成就者", kw: ["魄力", "财富", "权威", "效率"],
+        p: ["你目标明确、雄心勃勃，对成功与物质有清晰的追求。你具有出色的商业头脑与组织能力，在压力下反而更能发挥。",
+            "决断力强、善于管理资源、抗压能力高，有把想法转化为实际成果和财富的能力。",
+            "可能过于看重结果与权力，工作狂倾向明显，容易忽视情感与健康。",
+            "适合企业管理、金融、投资、房地产、法律、政府机构等需要魄力与掌控力的领域。",
+            "你在感情中重承诺、有担当，愿意为对方提供物质保障。但伴侣更想要的，可能是你的时间和温柔。",
+            "成功不只是数字。平衡好事业、健康与关系，才是真正的丰盛。"] },
+      9: { name: "理想者", kw: ["博爱", "理想", "包容", "灵性"],
+        p: ["你胸怀宽广、富有理想主义色彩，关心更大的世界。你有很强的同理心和艺术感受力，常常愿意为他人或某个信念付出。",
+            "包容心强、视野开阔、富有魅力，能激励和疗愈他人，具有很强的感染力。",
+            "容易过于理想化，面对现实时感到失落；情感丰富但可能难以放下过去。",
+            "适合公益、教育、艺术、医疗、心理疗愈、国际事务等能实现理想与价值的领域。",
+            "你爱得深沉而无私，向往灵魂层面的连接。注意不要在关系中一味牺牲，或爱上“需要被拯救”的人。",
+            "学会放下，才能迎接新的开始。你的光芒，会照亮很多人。"] }
+    },
+    MASTER: {
+      11: "大师数 11 · 灵感导师：直觉敏锐、富有灵性与启发力，承载着 2 的细腻，同时被赋予更高的使命感，但也伴随更大的精神压力。",
+      22: "大师数 22 · 建筑大师：拥有把宏大愿景变为现实的能力，承载着 4 的务实，格局更大，注定要做出有影响力的事。",
+      33: "大师数 33 · 疗愈导师：极致的无私与慈悲，承载着 6 的爱心，适合以爱与教导影响他人，也需注意不要过度牺牲自我。"
+    },
+    BDAY: { 1: "独立自主，喜欢主导", 2: "温柔体贴，擅长合作", 3: "开朗健谈，富有创意",
+            4: "踏实稳重，注重规则", 5: "热爱自由，适应力强", 6: "富有爱心，责任感强",
+            7: "善于思考，追求真理", 8: "目标明确，执行力强", 9: "胸怀宽广，富有同情心" },
+    YEARS: {
+      1: ["新的开始", "这是一个九年周期的起点，适合播种、开启新计划、建立新习惯。主动出击，勇敢迈出第一步。"],
+      2: ["合作与等待", "节奏放缓的一年，适合经营关系、寻求合作。耐心等待去年种下的种子发芽，不宜急于求成。"],
+      3: ["表达与创造", "灵感与社交活跃的一年，适合学习、创作、展示自我。享受生活，但注意精力不要过度分散。"],
+      4: ["打基础", "需要脚踏实地的一年，适合规划、积累和建立秩序。辛苦会多一些，但打下的基础将长久受益。"],
+      5: ["变化与突破", "充满变动与机会的一年，可能出现搬迁、换工作、旅行等。拥抱变化，同时保持理性。"],
+      6: ["责任与家庭", "关注家庭、健康与人际责任的一年，也是感情升温或成家的好时机。多关心身边的人。"],
+      7: ["沉淀与内省", "适合放慢脚步、学习进修、向内探索的一年。少一些外求，多一些独处与思考。"],
+      8: ["收获与权力", "事业与财富的丰收年，努力容易被看见。把握机会，同时注意平衡工作与生活。"],
+      9: ["结束与放下", "一个周期的尾声，适合整理、告别和释放。清理不再适合你的人和事，为新周期腾出空间。"]
+    },
+    LINES: [
+      ["艺术线", "富有艺术天分与审美力，想象力丰富，感受敏锐。"],
+      ["组织线", "组织与规划能力强，做事有条理，擅长统筹安排。"],
+      ["权力线", "有领导欲与企图心，适合掌控全局、承担大任。"],
+      ["物质线", "务实重物质，理财意识强，能把想法落地为实际成果。"],
+      ["感情线", "重情重义，情感丰富，善于经营人际与亲密关系。"],
+      ["智慧线", "头脑聪颖，记忆力与学习力强，善于思考与表达。"],
+      ["事业线", "目标感强，事业心重，具备持续奋斗的毅力。"],
+      ["人缘线", "人缘佳、亲和力强，容易获得贵人相助。"]
+    ],
+    MISSING: {
+      1: "自信与主动性需要培养，容易依赖他人做决定。",
+      2: "对他人情绪的觉察较弱，可多练习倾听与合作。",
+      3: "自我表达与想象力有待开发，可尝试多写、多说、多创作。",
+      4: "做事条理与耐性需加强，建议培养计划与执行习惯。",
+      5: "对变化较为抗拒，可以多尝试新事物、拓展舒适圈。",
+      6: "对家庭与责任的感受可能较淡，可学习付出与承担。",
+      7: "独立思考与深度钻研较少，可多读书、多反思。",
+      8: "对金钱与权力的掌控欲弱，需加强理财与目标规划。",
+      9: "对大局与他人的包容度可加强，学习放下与原谅。"
+    },
+    MANY: {
+      1: "自我意识非常强烈，主见十足，注意避免固执。",
+      2: "极度敏感细腻，直觉强，但容易想太多。",
+      3: "表达欲与创造力旺盛，点子多，需注意专注。",
+      4: "非常务实严谨，执行力强，但可能缺乏弹性。",
+      5: "对自由的渴望格外强烈，多才多艺但易浮躁。",
+      6: "责任感与爱心极强，容易成为“操心”的那个人。",
+      7: "思维深邃，求知欲旺盛，也可能更加内向多疑。",
+      8: "事业心与物质追求很强，天生的经营头脑。",
+      9: "理想主义色彩浓厚，富有同情心与使命感。"
+    }
+  },
+  ja: {
+    NUMS: {
+      1: { name: "開拓者", kw: ["独立", "リーダー", "開拓", "自信"],
+        p: ["生まれつき前へ進む力を持ち、自分で決めて自分の道を歩むことを好みます。強い意志と行動力があり、チームの中で真っ先に動き出すタイプ。他人のルールに縛られるのは苦手です。",
+            "目標意識が高く、決断が早く、リスクを恐れません。困難な場面でもひとりで道を切り開ける、天性のリーダーシップがあります。",
+            "せっかちで頑固になりやすく、人の意見に耳を傾けられないことも。自分を押し出しすぎると、周りにプレッシャーを与えてしまいます。",
+            "起業家、経営・管理職、営業、フリーランスなど、自ら切り開き自分で決められる分野が向いています。",
+            "恋愛では主導権を握りがち。あなたを認めつつ自由も与えてくれる相手が理想です。弱さを見せ、話を聴くことで関係はもっと深まります。",
+            "勇気はあなたの才能、忍耐はあなたの課題。ときには歩みをゆるめて。協力が、あなたをもっと遠くへ連れて行きます。"] },
+      2: { name: "調和者", kw: ["繊細", "協調", "優しさ", "感受性"],
+        p: ["穏やかで思いやりがあり、人の感情を敏感に察知します。調和のとれた空気を好み、人と人との架け橋になるのが得意。多くの人にとって頼れる聞き役です。",
+            "相手の気持ちを汲み取り、根気強く丁寧で、協力が得意。人が見落とす細部に気づける、優れたサポーター・調整役です。",
+            "優柔不断になりやすく、人の目を気にしすぎる傾向も。自分の欲求を抑え込んで、心が疲れてしまうことがあります。",
+            "カウンセラー、心理職、人事、事務、デザイン、外交、教育など、細やかさとコミュニケーションが求められる仕事に向いています。",
+            "寄り添いと安心感を大切にする、優しい恋人です。ただ、相手に合わせるだけでなく、本当の気持ちを伝えることを忘れずに。",
+            "あなたの優しさはとても貴重。でもまずは自分を大切に。「ノー」と言えることが、成長の第一歩です。"] },
+      3: { name: "表現者", kw: ["創造性", "楽観", "表現", "社交"],
+        p: ["明るく楽観的で、頭の中にはいつも新しいアイデアが。言葉や文章、アートで自分を表現するのが得意で、どこにいても場を和ませます。",
+            "想像力豊かで話し上手、ユーモアのセンスも抜群。新しいことの吸収が早く、人を惹きつける魅力があります。",
+            "興味の幅が広い反面、飽きっぽく、気分の浮き沈みも大きめ。最後までやり遂げる粘り強さが課題です。",
+            "クリエイター、メディア、広告、芸能、教育、司会、SNS 発信など、創造性と表現力を生かせる分野が向いています。",
+            "ロマンチックで楽しい恋人。新鮮さを求めます。自由な発想を受け止めつつ、心を落ち着かせてくれる相手が理想です。",
+            "ひらめきを形にしてこそ、本当の才能。最後までやり抜くプロジェクトをひとつ持ってみましょう。"] },
+      4: { name: "建設者", kw: ["堅実", "安定", "秩序", "信頼"],
+        p: ["地に足がついた落ち着いたタイプで、計画とルールを大切にします。一歩一歩の積み重ねを信じ、空想よりも実際の成果を重視。周りから最も頼りにされる存在です。",
+            "責任感が強く、筋道立てて考え、驚くほどの粘り強さを持っています。複雑な物事を分解して、着実に形にするのが得意です。",
+            "保守的で柔軟性に欠けることがあり、変化を嫌う傾向も。自分に過度なプレッシャーをかけがちです。",
+            "エンジニア、経理・財務、法律、プロジェクト管理、研究開発、建築など、緻密さと計画性が求められる分野が向いています。",
+            "一途で誠実。甘い言葉よりも行動で愛を示します。ときにはロマンチックなサプライズを加えると、相手はもっと喜ぶはず。",
+            "安定はあなたの土台。でも世界は、あなたがときどき常識を破ることも必要としています。小さな失敗を自分に許して。"] },
+      5: { name: "自由人", kw: ["自由", "冒険", "変化", "好奇心"],
+        p: ["自由を愛し、さまざまな体験を求め、束縛を嫌います。好奇心旺盛で適応力が高く、旅や新しい出会い、新しい挑戦が大好き。人生経験は彩り豊かになりがちです。",
+            "頭の回転が速く多才で、コミュニケーション能力も抜群。変化の中でこそ生き生きとし、チャンスを見つけるのが得意です。",
+            "衝動的で落ち着きに欠けることがあり、ひとつの物事や関係に長く集中するのが難しいことも。",
+            "旅行、営業、マーケティング、メディア、広報、貿易、フリーランスなど、変化に富んだ分野が向いています。",
+            "情熱と自由を両立できる関係が必要で、束縛が何より苦手。一緒に世界を探検してくれる相手を見つけることが大切です。",
+            "本当の自由は、内なる自律から生まれます。流れの中で、自分だけの錨を見つけて。"] },
+      6: { name: "守護者", kw: ["責任", "愛情", "家族", "美意識"],
+        p: ["強い責任感と深い愛情を持ち、いつも周りの人の世話を焼きます。家族や親しい関係をとても大切にし、美的センスにも優れています。",
+            "温かく頼りがいがあり、思いやりにあふれ、人に尽くすことを厭いません。調和のとれた美しい環境をつくるのが得意です。",
+            "尽くしすぎ・心配しすぎになりやすく、無意識に相手をコントロールしようとしたり、完璧主義で不安になったりすることも。",
+            "医療、看護、教育、福祉、デザイン、飲食、美容など、人へのサービスや美に関わる分野が向いています。",
+            "生まれながらのパートナー気質で、愛のためならすべてを捧げます。でも愛には、お互いの距離と尊重も必要です。",
+            "人を大切にする前に、自分にも少し愛を分けてあげて。手放すことも、ひとつの愛の形です。"] },
+      7: { name: "探求者", kw: ["知性", "内省", "分析", "神秘"],
+        p: ["理性的で奥深く、物事の背後にある真実を追い求めます。ひとりの時間と思索を楽しみ、学問・哲学・スピリチュアルな世界に自然と惹かれる、ミステリアスな雰囲気の持ち主です。",
+            "洞察力が鋭く、論理的で集中力が高い。専門分野をとことん深く掘り下げることができます。",
+            "疑い深く閉鎖的になりやすく、心を開くのが苦手。ときに冷たく、孤立して見えることも。",
+            "研究、技術職、アナリスト、執筆、哲学、心理学、占術研究など、深い思考が求められる分野が向いています。",
+            "スロースターターで理想が高く、精神的な共鳴を求めます。一度心を決めた相手にはとても深い愛情を注ぎます。内面をもっと分かち合ってみて。",
+            "「信頼」こそ、あなたが最も練習すべき課題。人を信じ、そして人生そのものを信じて。"] },
+      8: { name: "達成者", kw: ["行動力", "富", "権威", "効率"],
+        p: ["目標が明確で野心的、成功と豊かさをはっきりと求めます。優れたビジネスセンスと組織力を持ち、プレッシャーの中でこそ本領を発揮します。",
+            "決断力があり、資源を管理する力やストレス耐性も高い。アイデアを実際の成果や富に変える力を持っています。",
+            "結果や権力を重視しすぎて、仕事中毒になりがち。感情面や健康を後回しにしやすい傾向があります。",
+            "経営、金融、投資、不動産、法律、公的機関など、決断力と統率力が求められる分野が向いています。",
+            "恋愛では約束を重んじ、責任感があり、経済的な安心を与えようとします。でも相手が本当に望んでいるのは、あなたの時間と優しさかもしれません。",
+            "成功は数字だけではありません。仕事・健康・人間関係のバランスこそが、本当の豊かさです。"] },
+      9: { name: "理想家", kw: ["博愛", "理想", "寛容", "霊性"],
+        p: ["心が広く理想主義的で、より大きな世界に関心を寄せます。共感力と芸術的な感受性が強く、人や信念のために尽くすことをいといません。",
+            "包容力があり視野が広く、魅力にあふれています。人を励まし癒やす、強い影響力を持っています。",
+            "理想が高すぎて、現実とのギャップに落ち込むことも。感情が豊かな分、過去を手放すのが苦手な面があります。",
+            "社会貢献、教育、芸術、医療、セラピー、国際関係など、理想や価値を実現できる分野が向いています。",
+            "深く無償の愛を注ぎ、魂のつながりを求めます。関係の中で自分ばかりを犠牲にしたり、「救ってあげたい人」に惹かれすぎたりしないよう注意を。",
+            "手放すことを覚えれば、新しい始まりがやってきます。あなたの光は、多くの人を照らすでしょう。"] }
+    },
+    MASTER: {
+      11: "マスターナンバー 11 · 直感の導き手：鋭い直感と霊性、人を啓発する力を持ちます。2 の繊細さを宿しつつ、より高い使命を与えられていますが、そのぶん精神的な重圧も大きくなります。",
+      22: "マスターナンバー 22 · 偉大な建設者：壮大なビジョンを現実に変える力の持ち主。4 の堅実さを宿しながら、さらに大きなスケールで影響力のあることを成し遂げる運命にあります。",
+      33: "マスターナンバー 33 · 癒やしの導き手：究極の無私と慈悲。6 の愛情を宿し、愛と教えで人々に影響を与えます。自分を犠牲にしすぎないよう注意を。"
+    },
+    BDAY: { 1: "自立心が強く、主導権を握りたい", 2: "優しく思いやりがあり、協調が得意", 3: "明るく話し上手で、創造性豊か",
+            4: "堅実で落ち着きがあり、ルールを重んじる", 5: "自由を愛し、適応力が高い", 6: "愛情深く、責任感が強い",
+            7: "思索を好み、真理を探求する", 8: "目標が明確で、実行力が高い", 9: "心が広く、思いやりにあふれる" },
+    YEARS: {
+      1: ["新たな始まり", "9 年サイクルのスタート地点。種をまき、新しい計画を始め、新しい習慣を築くのに最適な年です。自分から動き、勇気を出して最初の一歩を。"],
+      2: ["協力と待機", "ペースがゆるやかになる年。人間関係を育て、協力を求めるのに向いています。去年まいた種が芽吹くのを焦らず待ちましょう。"],
+      3: ["表現と創造", "ひらめきと交流が活発になる年。学び・創作・自己表現に向いています。人生を楽しみつつ、エネルギーを分散させすぎないように。"],
+      4: ["土台づくり", "地道な努力が求められる年。計画・蓄積・秩序づくりに向いています。大変なことも増えますが、築いた土台は長く役立ちます。"],
+      5: ["変化と突破", "変化とチャンスに満ちた年。引っ越し・転職・旅などが起こりやすい時期です。変化を受け入れつつ、冷静さを保って。"],
+      6: ["責任と家族", "家族・健康・人間関係の責任に目が向く年。恋愛が深まったり、家庭を築いたりするのにも良いタイミング。身近な人を大切に。"],
+      7: ["内省と熟成", "立ち止まって学び直し、内面を見つめるのに向いた年。外に求めるより、ひとりの時間と思索を大切に。"],
+      8: ["収穫と力", "仕事と金運の実りの年。努力が認められやすい時期です。チャンスをつかみつつ、仕事と生活のバランスにも気を配って。"],
+      9: ["完了と手放し", "サイクルの締めくくり。整理・別れ・解放に向いた年です。もう合わない人や物事を手放し、新しいサイクルのための余白をつくりましょう。"]
+    },
+    LINES: [
+      ["芸術ライン", "芸術的センスと美意識に恵まれ、想像力豊かで感受性が鋭い。"],
+      ["組織ライン", "組織力と計画力が高く、物事を筋道立てて進め、全体をまとめるのが得意。"],
+      ["権力ライン", "リーダー志向と野心があり、全体を統率して大役を担うのに向いている。"],
+      ["物質ライン", "現実的で物質面を重視し、金銭感覚に優れ、アイデアを形にできる。"],
+      ["感情ライン", "情に厚く感情豊かで、人間関係や親密な関係を育むのが上手。"],
+      ["知性ライン", "頭の回転が速く、記憶力・学習力に優れ、考えることと表現することが得意。"],
+      ["事業ライン", "目標意識と仕事への意欲が強く、努力を続ける粘り強さがある。"],
+      ["人望ライン", "人当たりが良く親しみやすい。周囲の助けや良縁に恵まれやすい。"]
+    ],
+    MISSING: {
+      1: "自信と主体性を育てる必要があり、決断を人に頼りがち。",
+      2: "人の感情への気づきがやや弱め。傾聴と協力を意識してみて。",
+      3: "自己表現と想像力はこれから伸ばせる部分。書く・話す・創ることを増やしてみて。",
+      4: "段取りと根気を強化したいところ。計画と実行の習慣づくりがおすすめ。",
+      5: "変化への抵抗感が強め。新しいことに挑戦して、コンフォートゾーンを広げてみて。",
+      6: "家族や責任への意識がやや薄め。人に尽くし、引き受けることを学んでみて。",
+      7: "自分で深く考え、探求する時間が少なめ。読書や振り返りを増やしてみて。",
+      8: "お金や権限への執着が弱め。資産管理と目標設定を意識してみて。",
+      9: "全体を見る視点や人への寛容さを伸ばせる余地あり。手放すこと、許すことを学んで。"
+    },
+    MANY: {
+      1: "自我意識がとても強く、主張がはっきりしています。頑固になりすぎないように。",
+      2: "非常に繊細で直感が鋭い反面、考えすぎてしまうことも。",
+      3: "表現欲と創造力が旺盛でアイデア豊富。集中力を意識して。",
+      4: "とても堅実で几帳面、実行力も抜群。ただし柔軟性に欠けることも。",
+      5: "自由への渇望がとりわけ強く、多才ですが落ち着きに欠けがち。",
+      6: "責任感と愛情が非常に強く、つい「世話焼き役」になりがち。",
+      7: "思考が深く知識欲が旺盛。そのぶん内向的・疑い深くなることも。",
+      8: "仕事への意欲と物質的な欲求が強い、生まれつきの経営センスの持ち主。",
+      9: "理想主義的な色合いが濃く、思いやりと使命感にあふれています。"
+    }
+  },
+  en: {
+    NUMS: {
+      1: { name: "The Pioneer", kw: ["Independent", "Leadership", "Pioneering", "Self-confident"],
+        p: ["You're driven by an inner urge to push forward, preferring to make your own decisions and carve your own path. You have strong willpower and action; you're often the first to step up in a group, and you dislike living inside other people's rules.",
+            "Strong sense of purpose, decisive, unafraid of risk — you can stand on your own when things get tough, with natural leadership charisma.",
+            "You can be impatient and stubborn, sometimes not listening to others; pushing yourself too hard may pressure those around you.",
+            "Suited to entrepreneurship, management, sales, freelance and other fields that demand initiative and autonomous decision-making.",
+            "In love you tend to take the lead, needing a partner who admires you yet gives you room. Learning to soften and listen will bring you closer.",
+            "Courage is your gift; patience is your lesson. Sometimes slowing down — collaboration takes you further."] },
+      2: { name: "The Mediator", kw: ["Delicate", "Cooperative", "Tenderness", "Sensitive"],
+        p: ["You're gentle and considerate, with a keen sense of others' emotions. You love harmony and excel at building bridges between people — a trusted listener for many.",
+            "Empathetic, patient and meticulous, great at cooperation; you notice what others miss, making an excellent supporter and peacemaker.",
+            "You tend to hesitate, care too much about others' opinions, and sometimes suppress your own needs, which can lead to inner exhaustion.",
+            "Suited to counseling, psychology, HR, administration, design, diplomacy and education — fields needing attentiveness and communication.",
+            "You value companionship and security, a devoted partner. But remember to express how you really feel instead of always yielding.",
+            "Your gentleness is precious, but take care of yourself first. Learning to say 'no' is where your growth begins."] },
+      3: { name: "The Communicator", kw: ["Creative", "Optimistic", "Expression", "Social"],
+        p: ["You're naturally cheerful and optimistic, always full of new ideas. You express yourself through words, writing or art, bringing a light, joyful atmosphere wherever you go.",
+            "Rich imagination, good with words, a sense of humor; you learn quickly and have the charisma to inspire others.",
+            "Broad interests but prone to losing interest fast, fluctuating moods, sometimes lacking patience to finish what you start.",
+            "Suited to writing, media, advertising, performing, teaching, hosting and self-media — fields needing creativity and expression.",
+            "You're romantic and fun, craving novelty. You need a partner who appreciates your flights of fancy yet can help ground you.",
+            "Turning inspiration into reality is true talent. Give yourself one project to finish — and see it through."] },
+      4: { name: "The Builder", kw: ["Practical", "Stability", "Order", "Reliable"],
+        p: ["You're steady and reliable, planning and valuing rules. You believe in taking one step at a time, caring more about real results than daydreaming — the most dependable person around.",
+            "Strong responsibility, clear organization, remarkable endurance; you break complex things down and get them done steadily.",
+            "You can be too conservative and inflexible, resistant to change, putting too much pressure on yourself.",
+            "Suited to engineering, finance, law, project management, R&D, architecture — fields needing rigor and planning.",
+            "You're devoted and serious in love, showing care through actions rather than sweet words. A little romance and surprise will win your partner over.",
+            "Stability is your foundation, but the world also needs you to break routine now and then. Allow yourself to make a mistake."] },
+      5: { name: "The Freedom-Seeker", kw: ["Freedom", "Adventure", "Change", "Curiosity"],
+        p: ["You love freedom and crave experience, hating to be tied down. Curious and adaptable, you thrive on travel, meeting new people and trying new things — your life tends to be rich and colorful.",
+            "Quick-witted, versatile, a strong communicator; you flourish in change and are good at spotting opportunities.",
+            "You can be impulsive and unfocused, struggling to commit to one thing or one relationship over the long term.",
+            "Suited to tourism, sales, marketing, media, PR, trade and freelance — fields full of change.",
+            "You need a relationship with both passion and freedom; being controlled is your worst fear. Finding someone to explore the world with is what matters most.",
+            "True freedom comes from inner discipline. Find your anchor within the flow."] },
+      6: { name: "The Guardian", kw: ["Responsibility", "Loving", "Family", "Aesthetics"],
+        p: ["You carry a strong sense of responsibility and love, always willing to care for those around you. Family and close relationships mean everything, and you have good aesthetic taste.",
+            "Warm, reliable, compassionate and devoted; you excel at creating harmonious, beautiful environments.",
+            "You give too much and worry too much, sometimes unconsciously trying to control others, or feeling anxious chasing perfection.",
+            "Suited to healthcare, nursing, education, social work, design, hospitality and beauty — fields tied to service and aesthetics.",
+            "You're a partner by nature, willing to give everything for love. But remember: love also needs space and respect on both sides.",
+            "Before caring for others, save some love for yourself. Letting go can itself be a form of love."] },
+      7: { name: "The Seeker", kw: ["Wisdom", "Introspection", "Analysis", "Mystery"],
+        p: ["You're rational and profound, always asking what lies beneath the surface. You enjoy solitude and thought, with a natural interest in knowledge, philosophy or spirituality — giving you an elusive sense of mystery.",
+            "Strong insight, rigorous logic, high focus; you can dig deep into any professional field.",
+            "You can become suspicious and closed off, reluctant to open up, sometimes appearing cold or withdrawn.",
+            "Suited to research, technology, analysis, writing, philosophy, psychology and esoteric studies — fields needing deep thinking.",
+            "You warm up slowly and are discerning; you need a spiritual resonance. Once committed, you're deeply devoted. Try sharing more of your inner world.",
+            "Trust is what you most need to practice — trusting others, and trusting life itself."] },
+      8: { name: "The Achiever", kw: ["Drive", "Wealth", "Authority", "Efficiency"],
+        p: ["You're clear-eyed and ambitious, with a definite pursuit of success and material security. You have sharp business sense and organizational skill, performing best under pressure.",
+            "Strong decisiveness, good at managing resources, high stress tolerance; you turn ideas into real results and wealth.",
+            "You may value outcomes and power too much, lean toward being a workaholic, neglecting emotion and health.",
+            "Suited to business management, finance, investment, real estate, law and government — fields needing drive and control.",
+            "You're committed and responsible in love, offering material security. But your partner may want your time and tenderness more.",
+            "Success isn't just numbers. Balance work, health and relationships for true abundance."] },
+      9: { name: "The Idealist", kw: ["Compassion", "Idealism", "Tolerance", "Spirituality"],
+        p: ["You have a broad mind and an idealistic streak, caring about the bigger world. You carry strong empathy and artistic sensitivity, often giving yourself to others or to a cause.",
+            "Highly tolerant, wide-ranging vision, charismatic; you can inspire and heal others with great influence.",
+            "You can be too idealistic, feeling lost before reality; emotionally rich but sometimes hard to let go of the past.",
+            "Suited to public welfare, education, art, healthcare, therapy, international affairs — fields realizing ideals and values.",
+            "You love deeply and selflessly, longing for a soul-level connection. Beware always sacrificing yourself, or falling for those who need saving.",
+            "Only by letting go can you welcome new beginnings. Your light will shine on many people."] }
+    },
+    MASTER: {
+      11: "Master Number 11 — The Inspiration Guide: sharply intuitive, spiritual and inspiring, carrying the delicacy of 2 while bearing a higher calling, yet also greater mental pressure.",
+      22: "Master Number 22 — The Master Builder: the ability to turn grand visions into reality, carrying the practicality of 4 with larger scope, destined to do impactful work.",
+      33: "Master Number 33 — The Healing Teacher: ultimate selflessness and compassion, carrying the love of 6, suited to influencing others through love and teaching, though you should avoid over-sacrificing yourself."
+    },
+    BDAY: { 1: "Independent, likes to take the lead", 2: "Gentle and considerate, great at cooperation", 3: "Cheerful and talkative, creative",
+            4: "Steady and reliable, values rules", 5: "Loves freedom, highly adaptable", 6: "Loving and responsible",
+            7: "A deep thinker, pursuing truth", 8: "Clear goals, strong execution", 9: "Broad-minded and compassionate" },
+    YEARS: {
+      1: ["New Beginnings", "The start of a nine-year cycle — ideal for sowing seeds, launching new plans and building habits. Strike out boldly and take the first step."],
+      2: ["Cooperation & Patience", "A year to slow down: nurture relationships and seek partnership. Wait patiently for last year's seeds to sprout; don't rush."],
+      3: ["Expression & Creation", "A year of inspiration and social energy — great for learning, creating and showcasing yourself. Enjoy life, but don't scatter your energy too thin."],
+      4: ["Laying Foundations", "A grounded year for planning, accumulating and building order. It may feel laborious, but the foundations you build will pay off for years."],
+      5: ["Change & Breakthrough", "A year full of movement and opportunity — possibly a move, a job change or travel. Embrace the change while staying clear-headed."],
+      6: ["Responsibility & Family", "A year focused on family, health and relational duties, and a good time for deepening love or starting a family. Care more about those around you."],
+      7: ["Reflection & Introspection", "A year to slow down — study, learn and turn inward. Seek less outwardly, and allow more solitude and thought."],
+      8: ["Harvest & Power", "A harvest year for career and wealth; your efforts are likely to be seen. Seize the opportunity while balancing work and life."],
+      9: ["Ending & Letting Go", "The tail end of a cycle — ideal for sorting out, saying goodbye and releasing. Clear away what no longer serves you, making room for the new cycle."]
+    },
+    LINES: [
+      ["Art Line", "Artistically gifted with good taste, rich imagination and acute sensitivity."],
+      ["Organization Line", "Strong organizational and planning skills; orderly and skilled at coordination."],
+      ["Power Line", "Ambitious and leadership-oriented, suited to taking charge of the big picture and carrying great responsibility."],
+      ["Material Line", "Practical and material-minded, financially astute, able to turn ideas into concrete results."],
+      ["Emotional Line", "Loyal and emotionally rich, skilled at nurturing relationships and intimacy."],
+      ["Intellect Line", "Sharp-minded with strong memory and learning ability; good at thinking and expression."],
+      ["Career Line", "Goal-driven with strong ambition and the endurance to keep fighting for your career."],
+      ["Relationship Line", "Well-liked and approachable, likely to attract helpful mentors and good connections."]
+    ],
+    MISSING: {
+      1: "Confidence and initiative need developing; you may rely on others to make decisions.",
+      2: "You may be less attuned to others' feelings — practice listening and cooperating.",
+      3: "Self-expression and imagination have room to grow; try writing, speaking and creating more.",
+      4: "Organization and patience could strengthen; build habits of planning and execution.",
+      5: "More resistant to change; try new things and stretch your comfort zone.",
+      6: "Your sense of family and responsibility may be lighter — learn to give and take charge.",
+      7: "Less time for independent deep thinking; read more and reflect more.",
+      8: "Weaker drive over money and power — strengthen financial planning and goal-setting.",
+      9: "Room to widen your perspective and tolerance of others; learn to let go and forgive." },
+    MANY: {
+      1: "A very strong sense of self with clear opinions — watch out for stubbornness.",
+      2: "Extremely sensitive with sharp intuition, but prone to overthinking.",
+      3: "Strong desire for expression and creativity with plenty of ideas; focus your attention.",
+      4: "Very reliable and meticulous with outstanding execution, though possibly lacking flexibility.",
+      5: "An especially strong longing for freedom; versatile but sometimes restless.",
+      6: "Extremely strong responsibility and love — prone to becoming the 'caretaker'.",
+      7: "Deep thinking and voracious curiosity, which can also make you more introverted and doubtful.",
+      8: "Strong ambition and material drive, a natural business sense.",
+      9: "A strong idealistic streak, full of compassion and a sense of mission."
+    }
+  },
+};
+
+const LINE_NUMS = [[1,2,3],[4,5,6],[7,8,9],[1,4,7],[2,5,8],[3,6,9],[1,5,9],[3,5,7]];
+
+const $ = id => document.getElementById(id);
+const digitSum = n => String(n).split("").reduce((a, c) => a + (+c), 0);
+let lang = "zh";
+let lastResult = null;
+
+function reduceChain(n) {
+  const chain = [n];
+  while (n > 9) { n = digitSum(n); chain.push(n); }
+  return chain;
+}
+
+function analyze(y, m, d) {
+  const dateStr = String(y) + String(m).padStart(2, "0") + String(d).padStart(2, "0");
+  const total = digitSum(dateStr);
+  const chain = reduceChain(total);
+  const life = chain[chain.length - 1];
+  const master = chain.find(x => x === 11 || x === 22 || x === 33);
+
+  const counts = Array(10).fill(0);
+  const gridDigits = dateStr + String(total) + (total > 9 ? String(life) : "");
+  for (const c of gridDigits) counts[+c]++;
+
+  const bday = reduceChain(d).pop();
+  const curYear = new Date().getFullYear();
+  const pyear = reduceChain(digitSum(curYear) + digitSum(m) + digitSum(d)).pop();
+
+  return { total, chain, life, master, counts, bday, pyear, curYear };
+}
+
+function render(r, animate) {
+  const T = I18N[lang], D = DATA[lang];
+  const info = D.NUMS[r.life];
+  $("lifeNum").textContent = r.life;
+  $("title").innerHTML = T.title(r.life, info.name);
+  $("chain").textContent = T.chain + r.chain.join(" → ");
+  $("tags").innerHTML = info.kw.map(k => `<span class="tag">${k}</span>`).join("");
+  $("master").textContent = r.master ? "✧ " + D.MASTER[r.master] : "";
+  $("colorNote").textContent = T.colorNote(T.colors[r.life - 1]);
+
+  $("talent").textContent = String(r.total).split("").join(" · ");
+  $("bday").textContent = r.bday;
+  $("bdayDesc").textContent = D.BDAY[r.bday];
+  $("pyear").textContent = r.pyear;
+  $("pyearK").textContent = T.pyearK(r.curYear);
+  $("pyearDesc").textContent = D.YEARS[r.pyear][0];
+
+  $("analysis").innerHTML = info.p.map((p, i) =>
+    `<div class="block${i === 0 || i === 5 ? " wide" : ""}"><h4>${T.blocks[i]}</h4><p>${p}</p></div>`).join("");
+
+  // 九宫格：从上到下 3 6 9 / 2 5 8 / 1 4 7
+  const pos = n => ({ x: 50 + 100 * Math.floor((n - 1) / 3), y: 50 + 100 * (2 - (n - 1) % 3) });
+  const order = [3, 6, 9, 2, 5, 8, 1, 4, 7];
+  $("cells").innerHTML = order.map(n => {
+    const c = r.counts[n];
+    return `<div class="cell"><span class="${c ? "on" : ""}">${n}${c ? `<i>×${c}</i>` : ""}</span></div>`;
+  }).join("");
+
+  const hit = LINE_NUMS.map((ns, i) => ({ ns, name: D.LINES[i][0], desc: D.LINES[i][1] }))
+    .filter(l => l.ns.every(n => r.counts[n] > 0));
+  if (animate) {
+    $("lines").innerHTML = hit.map((l, i) => {
+      const a = pos(l.ns[0]), b = pos(l.ns[2]);
+      return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" style="animation-delay:${i * 0.25}s"/>`;
+    }).join("");
+  }
+  $("lineList").innerHTML = hit.length
+    ? hit.map(l => `<div class="item"><b>${T.lineLbl(l.name, l.ns.join("-"))}</b>${l.desc}</div>`).join("")
+    : `<div class="muted">${T.noLines}</div>`;
+
+  const miss = [1,2,3,4,5,6,7,8,9].filter(n => !r.counts[n]);
+  $("missList").innerHTML = miss.length
+    ? miss.map(n => `<div class="item miss"><b>${T.missLbl(n)}</b>${D.MISSING[n]}</div>`).join("")
+    : `<div class="muted">${T.noMiss}</div>`;
+
+  const many = [1,2,3,4,5,6,7,8,9].filter(n => r.counts[n] >= 3);
+  $("manyList").innerHTML = many.length
+    ? many.map(n => `<div class="item many"><b>${n} × ${r.counts[n]}</b>${D.MANY[n]}</div>`).join("")
+    : `<div class="muted">${T.noMany}</div>`;
+
+  $("yearBar").innerHTML = [1,2,3,4,5,6,7,8,9].map(n =>
+    `<div class="${n === r.pyear ? "cur" : ""}">${n}</div>`).join("");
+  $("yearTitle").textContent = T.yearTitle(r.curYear, r.pyear, D.YEARS[r.pyear][0]);
+  $("yearText").textContent = D.YEARS[r.pyear][1];
+
+  if (animate) {
+    const res = $("result");
+    res.classList.remove("show"); void res.offsetWidth; res.classList.add("show");
+    res.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+// 表单
+const mSel = $("m"), dSel = $("d"), yIn = $("y");
+function fillMonths() {
+  const cur = +mSel.value || 1;
+  mSel.innerHTML = "";
+  for (let i = 1; i <= 12; i++) mSel.add(new Option(I18N[lang].monthOpt(i), i));
+  mSel.value = cur;
+}
+function fillDays() {
+  const y = +yIn.value || 2000, m = +mSel.value;
+  const max = new Date(y, m, 0).getDate();
+  const cur = +dSel.value || 1;
+  dSel.innerHTML = "";
+  for (let i = 1; i <= max; i++) dSel.add(new Option(I18N[lang].dayOpt(i), i));
+  dSel.value = Math.min(cur, max);
+}
+mSel.addEventListener("change", fillDays);
+yIn.addEventListener("input", fillDays);
+
+let errKey = null;
+function showErr() {
+  const T = I18N[lang];
+  $("err").textContent = errKey === "year" ? T.errYear(new Date().getFullYear())
+                       : errKey === "future" ? T.errFuture : "";
+}
+function submit() {
+  const y = +yIn.value, m = +mSel.value, d = +dSel.value;
+  const now = new Date();
+  errKey = null;
+  if (!Number.isInteger(y) || y < 1900 || y > now.getFullYear()) errKey = "year";
+  else if (new Date(y, m - 1, d) > now) errKey = "future";
+  showErr();
+  if (errKey) return;
+  lastResult = analyze(y, m, d);
+  document.documentElement.setAttribute("data-theme", lastResult.life);
+  render(lastResult, true);
+}
+$("go").addEventListener("click", submit);
+yIn.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
+
+// 语言切换
+function setLang(l) {
+  lang = l;
+  const T = I18N[l];
+  document.documentElement.lang = T.htmlLang;
+  document.title = T.docTitle;
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = T[el.dataset.i18n]; });
+  document.querySelectorAll(".lang button").forEach(b => b.classList.toggle("on", b.dataset.lang === l));
+  fillMonths(); fillDays(); showErr();
+  if (lastResult) render(lastResult, false);
+  try { localStorage.setItem("numerology-lang", l); } catch (e) {}
+}
+document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang)));
+
+let initLang = "zh";
+try {
+  const saved = localStorage.getItem("numerology-lang");
+  if (saved in I18N) initLang = saved;
+  else if ((navigator.language || "").toLowerCase().startsWith("ja")) initLang = "ja";
+} catch (e) {}
+setLang(initLang);
+</script>
+</body>
+</html>
