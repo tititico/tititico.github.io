@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>抓小猪 - 3D三消游戏</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Microsoft YaHei', sans-serif; }
+
+  #container {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+  }
+  #container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  #top-bar {
+    position: absolute; top: 16px; left: 0; right: 0;
+    text-align: center; z-index: 10; pointer-events: none;
+  }
+  #title { font-size: 28px; font-weight: bold; color: #d4637a; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  #pig-status {
+    position: absolute; top: 16px; right: 20px;
+    font-size: 18px; color: #d4637a; z-index: 10; pointer-events: none; font-weight: bold;
+  }
+
+  #slot-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    display: flex; justify-content: center; align-items: center; gap: 8px;
+    padding: 16px;
+    background: linear-gradient(to top, rgba(255,240,230,0.95), rgba(255,240,230,0.7));
+    backdrop-filter: blur(8px); z-index: 10;
+  }
+  .slot {
+    width: 56px; height: 56px; border-radius: 12px;
+    background: #fff; border: 2px solid #f0c0a0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .slot.filled { border-color: #e8a080; background: #fff8f0; }
+  .slot.match-anim { animation: slotPop 0.3s ease-out; }
+  @keyframes slotPop { 0%{transform:scale(1)} 50%{transform:scale(1.2)} 100%{transform:scale(0);opacity:0} }
+
+  #shuffle-btn {
+    margin-left: 16px; width: 56px; height: 56px; border-radius: 12px;
+    background: linear-gradient(135deg, #ffb6c1, #ff8fa3);
+    border: none; font-size: 24px; cursor: pointer; color: white;
+    box-shadow: 0 2px 8px rgba(255,140,160,0.4); position: relative;
+  }
+  #shuffle-btn:hover { transform: scale(1.08); }
+  #shuffle-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+  #shuffle-count {
+    position: absolute; top: -6px; right: -6px;
+    background: #ff4060; color: white; font-size: 12px;
+    width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-weight: bold;
+  }
+
+  #catch-toast {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    font-size: 48px; z-index: 50; pointer-events: none; white-space: nowrap;
+  }
+  #catch-toast.show { animation: catchPop 1s ease-out forwards; }
+  @keyframes catchPop {
+    0% { transform: translate(-50%,-50%) scale(0) rotate(-20deg); opacity:1; }
+    30% { transform: translate(-50%,-50%) scale(1.5) rotate(10deg); opacity:1; }
+    100% { transform: translate(-50%,-80%) scale(1); opacity:0; }
+  }
+
+  .match-particle {
+    position: fixed; pointer-events: none; z-index: 200;
+    font-size: 18px; will-change: transform, opacity;
+    transition: transform 0.55s cubic-bezier(0, 0.7, 0.3, 1), opacity 0.55s ease-out;
+  }
+
+  #guide-overlay {
+    display: none; position: absolute; top:0;left:0;right:0;bottom:0;
+    background: rgba(30,15,10,0.6); z-index: 120;
+    justify-content: center; align-items: center; backdrop-filter: blur(6px);
+  }
+  #guide-overlay.show { display: flex; }
+  #guide-box {
+    background: linear-gradient(145deg, #fff8f0, #fff0e8);
+    border-radius: 24px; padding: 36px 32px 28px;
+    text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    max-width: 360px; width: 90%; animation: guideIn 0.4s ease-out;
+  }
+  @keyframes guideIn { from { transform: scale(0.85); opacity:0; } to { transform: scale(1); opacity:1; } }
+  #guide-box h2 { font-size: 32px; margin-bottom: 6px; color: #d4637a; }
+  #guide-box .sub { font-size: 14px; color: #b08070; margin-bottom: 20px; }
+  #guide-steps { text-align: left; padding: 0 8px; }
+  #guide-steps .step {
+    display: flex; align-items: flex-start; gap: 12px;
+    margin-bottom: 14px; font-size: 15px; color: #5a3e36; line-height: 1.5;
+  }
+  #guide-steps .step .icon { font-size: 28px; flex-shrink: 0; }
+  #guide-start-btn {
+    margin-top: 20px; padding: 12px 48px; font-size: 18px; border: none;
+    border-radius: 14px; color: white; cursor: pointer;
+    background: linear-gradient(135deg, #ffb6c1, #ff8fa3);
+    box-shadow: 0 4px 16px rgba(255,140,160,0.4);
+    transition: transform 0.15s;
+  }
+  #guide-start-btn:hover { transform: scale(1.06); }
+
+  #overlay {
+    display: none; position: absolute; top:0;left:0;right:0;bottom:0;
+    background: rgba(0,0,0,0.5); z-index: 100;
+    justify-content: center; align-items: center; backdrop-filter: blur(4px);
+  }
+  #overlay.show { display: flex; }
+  #overlay-box { background: white; border-radius: 24px; padding: 40px; text-align: center; box-shadow: 0 16px 48px rgba(0,0,0,0.2); }
+  #overlay-title { font-size: 36px; margin-bottom: 8px; }
+  #overlay-msg { font-size: 18px; color: #888; margin-bottom: 24px; }
+  #restart-btn {
+    padding: 12px 32px; font-size: 18px; border: none; border-radius: 12px;
+    background: linear-gradient(135deg, #ffb6c1, #ff8fa3);
+    color: white; cursor: pointer; box-shadow: 0 4px 12px rgba(255,140,160,0.4);
+  }
+  #restart-btn:hover { transform: scale(1.05); }
+</style>
+</head>
+<body>
+
+<div id="container"></div>
+<div id="top-bar"><span id="title">🐷 抓小猪</span></div>
+<div id="pig-status">🐷 找到小猪！</div>
+
+<div id="slot-bar">
+  <div class="slot" id="slot-0"></div><div class="slot" id="slot-1"></div>
+  <div class="slot" id="slot-2"></div><div class="slot" id="slot-3"></div>
+  <div class="slot" id="slot-4"></div><div class="slot" id="slot-5"></div>
+  <div class="slot" id="slot-6"></div>
+  <button id="shuffle-btn" title="洗牌">🔀<span id="shuffle-count">3</span></button>
+</div>
+
+<div id="catch-toast">🐷 抓到了！</div>
+<div id="guide-overlay" class="show">
+  <div id="guide-box">
+    <h2>🐷 抓小猪</h2>
+    <div class="sub">3D 三消找猪游戏</div>
+    <div id="guide-steps">
+      <div class="step"><span class="icon">👆</span><span>点击桌子上的<strong>食物</strong>，它会飞到下方槽位</span></div>
+      <div class="step"><span class="icon">✨</span><span>集齐 <strong>3 个相同</strong> 食物自动消除</span></div>
+      <div class="step"><span class="icon">🐷</span><span>消除覆盖小猪的食物，<strong>点击小猪</strong> 即可获胜！</span></div>
+      <div class="step"><span class="icon">🔀</span><span>遇到困难可用<strong>洗牌</strong>（共 3 次）</span></div>
+    </div>
+    <button id="guide-start-btn">开始游戏</button>
+  </div>
+</div>
+<div id="overlay">
+  <div id="overlay-box">
+    <div id="overlay-title"></div><div id="overlay-msg"></div>
+    <button id="restart-btn">再来一局</button>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+} }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+// ============ CONFIG ============
+const ITEM_EMOJIS = ['🍰', '🍩', '🍦', '🧁', '🍪', '🍫']; // for slot display
+const BLOCK_SIZE = 1.0, BLOCK_HEIGHT = 0.55, SPACING = BLOCK_SIZE * 1.15;
+const GROUND_Y = BLOCK_HEIGHT / 2;
+const MAX_SLOTS = 7, MAX_SHUFFLES = 3, GRAVITY = 15;
+
+let blocks = [], slots = new Array(MAX_SLOTS).fill(null), slotCount = 0;
+let shufflesLeft = MAX_SHUFFLES, animating = false, gameOver = false;
+
+// ============ RENDERER ============
+const container = document.getElementById('container');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xfef0e4);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 11, 4);
+camera.lookAt(0, 2, 1);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+dirLight.position.set(3, 10, 5);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(1024, 1024);
+Object.assign(dirLight.shadow.camera, { near:0.5, far:30, left:-8, right:8, top:8, bottom:-8 });
+scene.add(dirLight);
+const fill = new THREE.DirectionalLight(0xffd0d0, 0.3);
+fill.position.set(-3, 5, -3);
+scene.add(fill);
+
+// Table
+const table = new THREE.Mesh(
+  new THREE.CylinderGeometry(3, 3, 0.3, 64),
+  new THREE.MeshStandardMaterial({ color: 0xdeb887, roughness: 0.7 })
+);
+table.position.y = -0.3; table.receiveShadow = true; scene.add(table);
+const rim = new THREE.Mesh(
+  new THREE.TorusGeometry(3, 0.08, 16, 64),
+  new THREE.MeshStandardMaterial({ color: 0xc9a96e })
+);
+rim.rotation.x = -Math.PI / 2; rim.position.y = -0.15; scene.add(rim);
+
+// ============ 3D FOOD MODELS ============
+// type 0: 🍰 Cake slice
+function createCake() {
+  const g = new THREE.Group();
+  const creamMat = new THREE.MeshStandardMaterial({ color: 0xfffacd, roughness: 0.4 });
+  const spongeMat = new THREE.MeshStandardMaterial({ color: 0xf5c77e, roughness: 0.6 });
+  const strawMat = new THREE.MeshStandardMaterial({ color: 0xff6b7a, roughness: 0.4 });
+
+  // Sponge base (wedge via cylinder segment)
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.2, 16, 1, false, 0, Math.PI / 2), spongeMat);
+  base.position.y = -0.08;
+  base.castShadow = true;
+  g.add(base);
+  // Cream layer
+  const cream = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.39, 0.06, 16, 1, false, 0, Math.PI / 2), creamMat);
+  cream.position.y = 0.05;
+  g.add(cream);
+  // Top sponge
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.12, 16, 1, false, 0, Math.PI / 2), spongeMat);
+  top.position.y = 0.14;
+  top.castShadow = true;
+  g.add(top);
+  // Strawberry on top
+  const berry = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), strawMat);
+  berry.position.set(0.12, 0.25, 0.12);
+  g.add(berry);
+
+  g.scale.set(1.9, 1.9, 1.9);
+  return g;
+}
+
+// type 1: 🍩 Donut
+function createDonut() {
+  const g = new THREE.Group();
+  const doughMat = new THREE.MeshStandardMaterial({ color: 0xd4943a, roughness: 0.5 });
+  const glazeMat = new THREE.MeshStandardMaterial({ color: 0xff85a2, roughness: 0.3 });
+
+  // Dough ring
+  const dough = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.12, 12, 24), doughMat);
+  dough.rotation.x = -Math.PI / 2;
+  dough.castShadow = true;
+  g.add(dough);
+  // Glaze (slightly larger half-torus on top)
+  const glaze = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.125, 12, 24, Math.PI), glazeMat);
+  glaze.rotation.x = -Math.PI / 2;
+  glaze.position.y = 0.02;
+  g.add(glaze);
+  // Sprinkles
+  const sprinkleColors = [0xff4444, 0x44dd44, 0x4488ff, 0xffff00, 0xff88ff];
+  for (let i = 0; i < 10; i++) {
+    const angle = (i / 10) * Math.PI * 2;
+    const r = 0.22;
+    const sp = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.015, 0.015, 0.06, 4),
+      new THREE.MeshStandardMaterial({ color: sprinkleColors[i % 5] })
+    );
+    sp.position.set(Math.cos(angle) * r, 0.13, Math.sin(angle) * r);
+    sp.rotation.set(Math.random() * 0.8, 0, Math.random() * 0.8);
+    g.add(sp);
+  }
+
+  g.scale.set(1.9, 1.9, 1.9);
+  return g;
+}
+
+// type 2: 🍦 Ice cream cone
+function createIceCream() {
+  const g = new THREE.Group();
+  const coneMat = new THREE.MeshStandardMaterial({ color: 0xd4a843, roughness: 0.6 });
+  const scoopMat = new THREE.MeshStandardMaterial({ color: 0xaaddff, roughness: 0.3 });
+  const scoop2Mat = new THREE.MeshStandardMaterial({ color: 0xffccdd, roughness: 0.3 });
+
+  // Cone
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.35, 12), coneMat);
+  cone.position.y = -0.05;
+  cone.castShadow = true;
+  g.add(cone);
+  // Waffle pattern (lines on cone)
+  const waffleMat = new THREE.MeshStandardMaterial({ color: 0xc09030 });
+  for (let i = 0; i < 3; i++) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.1 + i * 0.03, 0.008, 4, 16), waffleMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = -0.12 + i * 0.08;
+    g.add(ring);
+  }
+  // Scoop 1
+  const s1 = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), scoopMat);
+  s1.position.y = 0.18;
+  s1.castShadow = true;
+  g.add(s1);
+  // Scoop 2
+  const s2 = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10), scoop2Mat);
+  s2.position.set(0.02, 0.34, 0);
+  g.add(s2);
+
+  g.scale.set(1.8, 1.8, 1.8);
+  return g;
+}
+
+// type 3: 🧁 Cupcake
+function createCupcake() {
+  const g = new THREE.Group();
+  const wrapMat = new THREE.MeshStandardMaterial({ color: 0xff88aa, roughness: 0.4 });
+  const cakeMat = new THREE.MeshStandardMaterial({ color: 0xe8b960, roughness: 0.5 });
+  const frostMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2 });
+  const cherryMat = new THREE.MeshStandardMaterial({ color: 0xff2244, roughness: 0.3 });
+
+  // Paper wrapper (tapered cylinder)
+  const wrap = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.14, 0.2, 16), wrapMat);
+  wrap.position.y = -0.08;
+  wrap.castShadow = true;
+  g.add(wrap);
+  // Cake muffin top
+  const muffin = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), cakeMat);
+  muffin.position.y = 0.02;
+  g.add(muffin);
+  // Frosting swirl (stacked rings)
+  for (let i = 0; i < 3; i++) {
+    const frost = new THREE.Mesh(
+      new THREE.TorusGeometry(0.14 - i * 0.04, 0.04, 8, 16),
+      frostMat
+    );
+    frost.rotation.x = -Math.PI / 2;
+    frost.position.y = 0.08 + i * 0.06;
+    g.add(frost);
+  }
+  // Cherry
+  const cherry = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), cherryMat);
+  cherry.position.y = 0.28;
+  g.add(cherry);
+  // Cherry stem
+  const stem = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.008, 0.008, 0.06, 4),
+    new THREE.MeshStandardMaterial({ color: 0x44aa22 })
+  );
+  stem.position.set(0, 0.33, 0);
+  g.add(stem);
+
+  g.scale.set(1.8, 1.8, 1.8);
+  return g;
+}
+
+// type 4: 🍪 Cookie
+function createCookie() {
+  const g = new THREE.Group();
+  const cookieMat = new THREE.MeshStandardMaterial({ color: 0xd4a04a, roughness: 0.7 });
+  const chipMat = new THREE.MeshStandardMaterial({ color: 0x4a2810, roughness: 0.4 });
+
+  // Cookie disc
+  const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.3, 0.1, 24), cookieMat);
+  disc.castShadow = true;
+  g.add(disc);
+  // Chocolate chips
+  const chipGeo = new THREE.SphereGeometry(0.04, 6, 6);
+  const chipPositions = [
+    [0.1, 0.05, 0.08], [-0.12, 0.05, 0.05], [0.0, 0.05, -0.12],
+    [0.15, 0.05, -0.05], [-0.08, 0.05, -0.08], [-0.05, 0.05, 0.15],
+    [0.08, 0.05, 0.18], [-0.15, 0.05, 0.12]
+  ];
+  for (const p of chipPositions) {
+    const chip = new THREE.Mesh(chipGeo, chipMat);
+    chip.position.set(p[0], p[1], p[2]);
+    g.add(chip);
+  }
+  // Slight bumpiness on edge
+  const edgeMat = new THREE.MeshStandardMaterial({ color: 0xc89840, roughness: 0.8 });
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const bump = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), edgeMat);
+    bump.position.set(Math.cos(a) * 0.28, 0, Math.sin(a) * 0.28);
+    g.add(bump);
+  }
+
+  g.scale.set(1.9, 1.9, 1.9);
+  return g;
+}
+
+// type 5: 🍫 Chocolate bar
+function createChocolate() {
+  const g = new THREE.Group();
+  const chocoMat = new THREE.MeshStandardMaterial({ color: 0x5c2d12, roughness: 0.4, metalness: 0.05 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x3d1a08, roughness: 0.5 });
+
+  // Base bar
+  const bar = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.12, 0.35), chocoMat);
+  bar.castShadow = true;
+  g.add(bar);
+  // Grid segments (raised squares)
+  for (let r = 0; r < 2; r++) {
+    for (let c = 0; c < 3; c++) {
+      const seg = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 0.13), darkMat);
+      seg.position.set(-0.17 + c * 0.17, 0.08, -0.08 + r * 0.16);
+      g.add(seg);
+    }
+  }
+  // Foil wrapper peeking out
+  const foilMat = new THREE.MeshStandardMaterial({ color: 0xc0a050, metalness: 0.6, roughness: 0.2 });
+  const foil = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.08, 0.36), foilMat);
+  foil.position.set(0.12, -0.04, 0);
+  g.add(foil);
+
+  g.scale.set(1.9, 1.9, 1.9);
+  return g;
+}
+
+const FOOD_CREATORS = [createCake, createDonut, createIceCream, createCupcake, createCookie, createChocolate];
+
+// ============ BLOCKS ============
+
+// --- 3D Pig Model ---
+function createPig3D() {
+  const pig = new THREE.Group();
+  const pink = new THREE.MeshStandardMaterial({ color: 0xffaabb, roughness: 0.5 });
+  const darkPink = new THREE.MeshStandardMaterial({ color: 0xff8899, roughness: 0.5 });
+  const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+  const black = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.3 });
+
+  // Body (squashed sphere)
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 12), pink);
+  body.scale.set(1, 0.85, 1.2);
+  body.position.y = 0.05;
+  body.castShadow = true;
+  pig.add(body);
+
+  // Head
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), pink);
+  head.position.set(0, 0.15, 0.32);
+  head.castShadow = true;
+  pig.add(head);
+
+  // Snout
+  const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.06, 16), darkPink);
+  snout.rotation.x = Math.PI / 2;
+  snout.position.set(0, 0.12, 0.52);
+  pig.add(snout);
+
+  // Nostrils
+  const nostrilGeo = new THREE.SphereGeometry(0.025, 8, 8);
+  const n1 = new THREE.Mesh(nostrilGeo, black);
+  n1.position.set(-0.04, 0.12, 0.555);
+  pig.add(n1);
+  const n2 = new THREE.Mesh(nostrilGeo, black);
+  n2.position.set(0.04, 0.12, 0.555);
+  pig.add(n2);
+
+  // Eyes
+  const eyeGeo = new THREE.SphereGeometry(0.04, 8, 8);
+  const eyeWhiteGeo = new THREE.SphereGeometry(0.055, 8, 8);
+  // Left eye
+  const ew1 = new THREE.Mesh(eyeWhiteGeo, white);
+  ew1.position.set(-0.1, 0.22, 0.44);
+  pig.add(ew1);
+  const e1 = new THREE.Mesh(eyeGeo, black);
+  e1.position.set(-0.1, 0.23, 0.48);
+  pig.add(e1);
+  // Right eye
+  const ew2 = new THREE.Mesh(eyeWhiteGeo, white);
+  ew2.position.set(0.1, 0.22, 0.44);
+  pig.add(ew2);
+  const e2 = new THREE.Mesh(eyeGeo, black);
+  e2.position.set(0.1, 0.23, 0.48);
+  pig.add(e2);
+
+  // Ears
+  const earGeo = new THREE.ConeGeometry(0.08, 0.14, 8);
+  const ear1 = new THREE.Mesh(earGeo, darkPink);
+  ear1.position.set(-0.13, 0.35, 0.25);
+  ear1.rotation.set(0.3, 0, -0.4);
+  pig.add(ear1);
+  const ear2 = new THREE.Mesh(earGeo, darkPink);
+  ear2.position.set(0.13, 0.35, 0.25);
+  ear2.rotation.set(0.3, 0, 0.4);
+  pig.add(ear2);
+
+  // Legs (4 stubby cylinders)
+  const legGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.15, 8);
+  const legPositions = [[-0.15, -0.18, 0.15], [0.15, -0.18, 0.15],
+                        [-0.15, -0.18, -0.15], [0.15, -0.18, -0.15]];
+  for (const lp of legPositions) {
+    const leg = new THREE.Mesh(legGeo, darkPink);
+    leg.position.set(lp[0], lp[1], lp[2]);
+    leg.castShadow = true;
+    pig.add(leg);
+  }
+
+  // Tail (small torus)
+  const tail = new THREE.Mesh(
+    new THREE.TorusGeometry(0.05, 0.02, 8, 12, Math.PI * 1.5),
+    darkPink
+  );
+  tail.position.set(0, 0.1, -0.35);
+  tail.rotation.set(0, Math.PI / 2, 0);
+  pig.add(tail);
+
+  // Scale to fit block size
+  pig.scale.set(1.6, 1.6, 1.6);
+
+  // Tag all children so raycaster can find them
+  pig.traverse(child => { child.userData.isPigPart = true; });
+
+  return pig;
+}
+
+function makeBlock(type, isPig, x, y, z) {
+  let mesh;
+  if (isPig) {
+    mesh = createPig3D();
+  } else {
+    mesh = FOOD_CREATORS[type]();
+  }
+  mesh.position.set(x, y, z);
+  mesh.rotation.y = Math.random() * Math.PI * 2;
+  scene.add(mesh);
+  const bs = mesh.scale.x; // base scale set by creator function
+  return { mesh, type, isPig, removed: false, falling: false, velocity: 0, baseY: y, tiltX: 0, tiltZ: 0, baseScale: bs };
+}
+
+function generateLayout() {
+  blocks = [];
+  // 6 types × 12 each = 72 items + 1 pig = 73 blocks
+  const types = [];
+  for (let t = 0; t < 6; t++) for (let i = 0; i < 12; i++) types.push(t);
+  shuffle(types);
+  let idx = 0;
+
+  // 7 layers — smaller per-row, stacked tall
+  const layers = [
+    { rows: 4, cols: 4, off: 0,    hasPig: true },   // 16 (1 pig + 15)
+    { rows: 4, cols: 3, off: 0.3 },                   // 12
+    { rows: 3, cols: 4, off: 0.5 },                   // 12
+    { rows: 3, cols: 3, off: 0.7 },                   // 9
+    { rows: 3, cols: 3, off: 0.9 },                   // 9
+    { rows: 3, cols: 3, off: 1.1 },                   // 9
+    { rows: 3, cols: 2, off: 1.3 },                   // 6
+  ];
+
+  let layerIdx = 0;
+  for (const layer of layers) {
+    const count = layer.rows * layer.cols;
+    const baseOx = -(layer.cols - 1) * SPACING / 2 + layer.off * SPACING * 0.3;
+    const baseOz = -(layer.rows - 1) * SPACING / 2 + layer.off * SPACING * 0.3;
+    const y = GROUND_Y + layerIdx * BLOCK_HEIGHT;
+
+    // If this layer has pig, place it in center area so upper layers cover it
+    let pigPos = -1;
+    if (layer.hasPig) {
+      // Center 2×2 of the 4×4 grid: rows 1-2, cols 1-2
+      const centerPositions = [];
+      for (let cr = 1; cr <= 2; cr++)
+        for (let cc = 1; cc <= 2; cc++)
+          centerPositions.push(cr * layer.cols + cc);
+      pigPos = centerPositions[Math.floor(Math.random() * centerPositions.length)];
+    }
+
+    let n = 0;
+    for (let r = 0; r < layer.rows; r++) {
+      for (let c = 0; c < layer.cols; c++) {
+        const x = baseOx + c * SPACING;
+        const z = baseOz + r * SPACING;
+        if (n === pigPos) {
+          blocks.push(makeBlock(-1, true, x, y, z));
+        } else {
+          blocks.push(makeBlock(types[idx++], false, x, y, z));
+        }
+        n++;
+      }
+    }
+    layerIdx++;
+  }
+}
+
+function shuffle(a) { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} }
+
+// ============ PHYSICS ============
+const OVERLAP_THRESH = BLOCK_SIZE * 0.85;
+const TILT_STRENGTH = 0.25;      // max tilt angle (radians) for normal offset
+const PIG_TILT_EXTRA = 0.15;     // extra tilt when resting on the round pig
+const TILT_LERP = 0.12;          // smoothing factor per frame
+
+function applyGravity(dt) {
+  const active = blocks.filter(b => !b.removed);
+  active.sort((a, b) => a.baseY - b.baseY);
+
+  for (const block of active) {
+    const bx = block.mesh.position.x;
+    const bz = block.mesh.position.z;
+    const by = block.baseY;
+
+    // Collect all supports below this block
+    let highestTop = 0;
+    const supports = []; // { x, z, isPig, tiltX, tiltZ }
+    for (const o of active) {
+      if (o === block) continue;
+      if (o.baseY >= by - 0.01) continue;
+      if (Math.abs(o.mesh.position.x - bx) < OVERLAP_THRESH &&
+          Math.abs(o.mesh.position.z - bz) < OVERLAP_THRESH) {
+        const topSurface = o.baseY + BLOCK_HEIGHT / 2;
+        if (topSurface > highestTop - 0.1) { // collect supports near the highest
+          if (topSurface > highestTop) highestTop = topSurface;
+          supports.push({
+            x: o.mesh.position.x,
+            z: o.mesh.position.z,
+            isPig: o.isPig,
+            tiltX: o.tiltX || 0,
+            tiltZ: o.tiltZ || 0
+          });
+        }
+      }
+    }
+
+    const targetY = highestTop + BLOCK_HEIGHT / 2;
+
+    // --- Gravity ---
+    if (block.baseY > targetY + 0.02) {
+      block.velocity += GRAVITY * dt;
+      block.baseY -= block.velocity * dt;
+      if (block.baseY <= targetY) {
+        block.baseY = targetY;
+        block.velocity = 0;
+        block.falling = false;
+      } else {
+        block.falling = true;
+      }
+    } else {
+      block.baseY = targetY;
+      block.velocity = 0;
+      block.falling = false;
+    }
+    block.mesh.position.y = block.baseY;
+
+    // --- Tilt calculation (skip for pig itself) ---
+    if (block.isPig) {
+      block.tiltX = 0;
+      block.tiltZ = 0;
+      continue;
+    }
+
+    let targetTiltX = 0, targetTiltZ = 0;
+
+    if (supports.length > 0 && !block.falling) {
+      // 1) Offset-based tilt: center of support vs block center
+      let avgSx = 0, avgSz = 0;
+      for (const s of supports) { avgSx += s.x; avgSz += s.z; }
+      avgSx /= supports.length;
+      avgSz /= supports.length;
+
+      const offsetX = bx - avgSx; // positive = block center is to the right of support
+      const offsetZ = bz - avgSz;
+
+      // Tilt away from support center (block leans toward unsupported side)
+      targetTiltZ = -offsetX * TILT_STRENGTH * 2;
+      targetTiltX = offsetZ * TILT_STRENGTH * 2;
+
+      // Clamp
+      targetTiltX = Math.max(-TILT_STRENGTH, Math.min(TILT_STRENGTH, targetTiltX));
+      targetTiltZ = Math.max(-TILT_STRENGTH, Math.min(TILT_STRENGTH, targetTiltZ));
+
+      // 2) Extra tilt if any support is the round pig
+      for (const s of supports) {
+        if (s.isPig) {
+          const dx = bx - s.x;
+          const dz = bz - s.z;
+          targetTiltZ += -dx * PIG_TILT_EXTRA * 4;
+          targetTiltX += dz * PIG_TILT_EXTRA * 4;
+        }
+      }
+
+      // 3) Inherit tilt from supports (propagate upward)
+      let inheritX = 0, inheritZ = 0;
+      for (const s of supports) { inheritX += s.tiltX; inheritZ += s.tiltZ; }
+      inheritX /= supports.length;
+      inheritZ /= supports.length;
+      targetTiltX += inheritX * 0.6;
+      targetTiltZ += inheritZ * 0.6;
+
+      // Final clamp
+      const MAX_TILT = 0.35;
+      targetTiltX = Math.max(-MAX_TILT, Math.min(MAX_TILT, targetTiltX));
+      targetTiltZ = Math.max(-MAX_TILT, Math.min(MAX_TILT, targetTiltZ));
+    }
+
+    // Smooth lerp toward target tilt
+    block.tiltX = (block.tiltX || 0) + (targetTiltX - (block.tiltX || 0)) * TILT_LERP;
+    block.tiltZ = (block.tiltZ || 0) + (targetTiltZ - (block.tiltZ || 0)) * TILT_LERP;
+
+    // Apply rotation (keep existing Y rotation)
+    block.mesh.rotation.x = block.tiltX;
+    block.mesh.rotation.z = block.tiltZ;
+  }
+}
+
+// ============ INTERACTION ============
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2(-9, -9);
+const canvas = renderer.domElement;
+
+canvas.addEventListener('mousemove', e => {
+  const r = canvas.getBoundingClientRect();
+  mouse.x = ((e.clientX-r.left)/r.width)*2-1;
+  mouse.y = -((e.clientY-r.top)/r.height)*2+1;
+});
+
+// Helper: find which block a hit object belongs to
+function findBlockByHit(hitObj) {
+  // Direct mesh match (regular items)
+  const direct = blocks.find(b => b.mesh === hitObj);
+  if (direct) return direct;
+  // Pig group: walk up parents to find the group that's a block's mesh
+  let obj = hitObj;
+  while (obj.parent) {
+    const b = blocks.find(bl => bl.mesh === obj.parent);
+    if (b) return b;
+    obj = obj.parent;
+  }
+  return null;
+}
+
+canvas.addEventListener('click', e => {
+  if (animating || gameOver) return;
+  if (blocks.some(b => b.falling)) return;
+  const r = canvas.getBoundingClientRect();
+  mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+  mouse.y = -((e.clientY - r.top) / r.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const allMeshes = [];
+  blocks.filter(b => !b.removed).forEach(b => {
+    if (b.isPig) { b.mesh.traverse(c => { if (c.isMesh) allMeshes.push(c); }); }
+    else allMeshes.push(b.mesh);
+  });
+  const hits = raycaster.intersectObjects(allMeshes);
+  if (hits.length) {
+    const block = findBlockByHit(hits[0].object);
+    if (block && !block.removed) {
+      if (block.isPig) {
+        const foodLeft = blocks.some(b => !b.removed && !b.isPig);
+        if (foodLeft) {
+          // Wiggle the pig to hint "not yet!"
+          wigglePig(block);
+        } else {
+          catchPig(block);
+        }
+      } else {
+        pickItem(block);
+      }
+    }
+  }
+});
+
+let prevHover = null;
+function updateHover() {
+  // Reset previous hover
+  if (prevHover && !prevHover.removed) {
+    const s = prevHover.baseScale;
+    prevHover.mesh.scale.set(s, s, s);
+    prevHover = null;
+  }
+  if (blocks.some(b => b.falling)) { canvas.style.cursor = 'default'; return; }
+  raycaster.setFromCamera(mouse, camera);
+  const allMeshes = [];
+  blocks.filter(b => !b.removed).forEach(b => {
+    if (b.isPig) { b.mesh.traverse(c => { if (c.isMesh) allMeshes.push(c); }); }
+    else allMeshes.push(b.mesh);
+  });
+  const hits = raycaster.intersectObjects(allMeshes);
+  if (hits.length) {
+    const b = findBlockByHit(hits[0].object);
+    if (b) {
+      const hs = b.baseScale * 1.1;
+      b.mesh.scale.set(hs, hs, hs);
+      prevHover = b;
+      canvas.style.cursor = 'pointer';
+      return;
+    }
+  }
+  canvas.style.cursor = 'default';
+}
+
+function pigExposed(pig) {
+  for (const o of blocks) {
+    if (o === pig || o.removed) continue;
+    if (o.baseY > pig.baseY + 0.1 &&
+        Math.abs(o.mesh.position.x - pig.mesh.position.x) < OVERLAP_THRESH &&
+        Math.abs(o.mesh.position.z - pig.mesh.position.z) < OVERLAP_THRESH) return false;
+  }
+  return true;
+}
+function updatePigBounce(t) {
+  for (const b of blocks) {
+    if (!b.isPig || b.removed || b.falling) continue;
+    // Pig bounce uses scale pulse instead of position offset (avoids gravity conflict)
+    if (pigExposed(b)) {
+      const s = b.baseScale * (1 + Math.sin(t * 4) * 0.08);
+      b.mesh.scale.set(s, s, s);
+    }
+  }
+}
+
+// ============ CATCH PIG ============
+function wigglePig(block) {
+  const startRot = block.mesh.rotation.y;
+  const st = performance.now();
+  function wig(now) {
+    const t = Math.min((now - st) / 400, 1);
+    block.mesh.rotation.y = startRot + Math.sin(t * Math.PI * 4) * 0.3;
+    if (t < 1) requestAnimationFrame(wig);
+    else block.mesh.rotation.y = startRot;
+  }
+  requestAnimationFrame(wig);
+}
+
+function catchPig(block) {
+  animating = true; block.removed = true;
+  const sy = block.mesh.position.y, st = performance.now();
+  const toast = document.getElementById('catch-toast');
+  toast.classList.remove('show'); void toast.offsetWidth; toast.classList.add('show');
+  function anim(now) {
+    const t = Math.min((now-st)/800,1), e = 1-Math.pow(1-t,3);
+    block.mesh.position.y = sy+e*4;
+    block.mesh.rotation.y += 0.2;
+    const s = 1+e*0.5; block.mesh.scale.set(s,s,s);
+    if (t>0.4) {
+      const fade = 1-(t-0.4)/0.6;
+      block.mesh.traverse(c => { if (c.isMesh) { c.material.opacity = fade; c.material.transparent = true; } });
+    }
+    if (t<1) requestAnimationFrame(anim);
+    else { scene.remove(block.mesh); animating=false; gameOver=true;
+      setTimeout(()=>showOverlay('🎉 抓到小猪了！','恭喜你找到了藏在食物下面的小猪！'),400); }
+  }
+  requestAnimationFrame(anim);
+}
+
+// ============ PICK ITEM ============
+function pickItem(block) {
+  if (slotCount>=MAX_SLOTS) return;
+  animating=true; block.removed=true;
+  let ins = slotCount;
+  for (let i=0;i<slotCount;i++) {
+    if (slots[i]&&slots[i].type===block.type) {
+      let last=i; for(let j=i;j<slotCount;j++) if(slots[j]&&slots[j].type===block.type) last=j;
+      ins=last+1; break;
+    }
+  }
+  if (ins<slotCount) for(let i=slotCount;i>ins;i--) slots[i]=slots[i-1];
+  slots[ins] = { type:block.type, emoji:ITEM_EMOJIS[block.type] };
+  slotCount++;
+
+  const sp = block.mesh.position.clone(), tx=(ins-3)*0.8, st=performance.now();
+  function fly(now) {
+    const t=Math.min((now-st)/400,1), e=1-Math.pow(1-t,3);
+    block.mesh.position.x = sp.x+(tx-sp.x)*e;
+    block.mesh.position.z = sp.z+(5-sp.z)*e;
+    block.mesh.position.y = sp.y+(-1-sp.y)*e+Math.sin(e*Math.PI)*1.5;
+    const s=1-e*0.7; block.mesh.scale.set(s,s,s);
+    if(t<1) requestAnimationFrame(fly);
+    else { scene.remove(block.mesh); renderSlots(); setTimeout(checkMatches,100); }
+  }
+  requestAnimationFrame(fly);
+}
+
+function renderSlots() {
+  for(let i=0;i<MAX_SLOTS;i++){
+    const el=document.getElementById('slot-'+i);
+    if(slots[i]){el.textContent=slots[i].emoji;el.className='slot filled';}
+    else{el.textContent='';el.className='slot';}
+  }
+}
+
+function spawnMatchParticles(slotIndices, emoji) {
+  slotIndices.forEach(idx => {
+    const el = document.getElementById('slot-' + idx);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    // Burst particles
+    for (let i = 0; i < 12; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'match-particle';
+      particle.textContent = emoji;
+      // Random scatter position
+      const angle = (Math.PI * 2 * i) / 12 + (Math.random() - 0.5) * 0.6;
+      const dist = 35 + Math.random() * 55;
+      const tx = Math.cos(angle) * dist;
+      const ty = Math.sin(angle) * dist - 20 - Math.random() * 30;
+      particle.style.left = (cx - 9) + 'px';
+      particle.style.top = (cy - 9) + 'px';
+      document.body.appendChild(particle);
+      requestAnimationFrame(() => {
+        particle.style.transform = `translate(${tx}px, ${ty}px) scale(0.2)`;
+        particle.style.opacity = '0';
+      });
+      setTimeout(() => particle.remove(), 600);
+    }
+
+    // Extra sparkles (colored dots)
+    const sparkColors = ['#ffb6c1','#ffd700','#ff8fa3','#ffe4b5','#ffa07a','#ff69b4'];
+    for (let i = 0; i < 6; i++) {
+      const spark = document.createElement('div');
+      spark.className = 'match-particle';
+      spark.style.cssText = `
+        width: 8px; height: 8px; border-radius: 50%;
+        background: ${sparkColors[i]};
+        left: ${cx - 4}px; top: ${cy - 4}px;
+      `;
+      document.body.appendChild(spark);
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 25 + Math.random() * 40;
+      requestAnimationFrame(() => {
+        spark.style.transform = `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist - 15}px) scale(0)`;
+        spark.style.opacity = '0';
+      });
+      setTimeout(() => spark.remove(), 600);
+    }
+  });
+}
+
+function checkMatches() {
+  const cnt={};
+  for(let i=0;i<slotCount;i++) if(slots[i]) cnt[slots[i].type]=(cnt[slots[i].type]||0)+1;
+  for(const t in cnt) {
+    if(cnt[t]>=3) {
+      let rm=0; const idx=[];
+      for(let i=0;i<slotCount&&rm<3;i++) if(slots[i]&&slots[i].type===+t){idx.push(i);rm++;}
+      const emoji = ITEM_EMOJIS[+t];
+      spawnMatchParticles(idx, emoji);
+      idx.forEach(i=>document.getElementById('slot-'+i).classList.add('match-anim'));
+      setTimeout(()=>{
+        for(let i=idx.length-1;i>=0;i--) slots.splice(idx[i],1);
+        slotCount-=3; while(slots.length<MAX_SLOTS) slots.push(null);
+        renderSlots();
+        document.querySelectorAll('.slot').forEach(el=>el.classList.remove('match-anim'));
+        animating=false; checkMatches();
+      },300);
+      return;
+    }
+  }
+  animating=false;
+  if(slotCount>=MAX_SLOTS){gameOver=true;showOverlay('🐷 游戏结束','槽位满了，小猪跑掉了！');}
+}
+
+// ============ SHUFFLE ============
+document.getElementById('shuffle-btn').addEventListener('click',()=>{
+  if(shufflesLeft<=0||animating||gameOver||blocks.some(b=>b.falling)) return;
+  shufflesLeft--; document.getElementById('shuffle-count').textContent=shufflesLeft;
+  if(!shufflesLeft) document.getElementById('shuffle-btn').disabled=true;
+  animating=true;
+  const items=blocks.filter(b=>!b.removed&&!b.isPig);
+  const newTypes=items.map(b=>b.type);
+  shuffle(newTypes);
+  let swapped = false;
+  const st=performance.now();
+
+  function flip(now){
+    const t=Math.min((now-st)/600,1);
+    items.forEach((b,i)=>{
+      const bs = b.baseScale;
+      if (t < 0.5) {
+        const s = 1 - t * 2; // 1 → 0
+        b.mesh.scale.set(bs, Math.max(0.01, s * bs), bs);
+      } else {
+        if (!swapped && t >= 0.5) return;
+        const s = (t - 0.5) * 2; // 0 → 1
+        b.mesh.scale.set(bs, Math.max(0.01, s * bs), bs);
+      }
+    });
+
+    // Swap models at midpoint
+    if (!swapped && t >= 0.5) {
+      swapped = true;
+      items.forEach((b, i) => {
+        if (b.type !== newTypes[i]) {
+          const pos = b.mesh.position.clone();
+          const rotY = b.mesh.rotation.y;
+          scene.remove(b.mesh);
+          b.type = newTypes[i];
+          b.mesh = FOOD_CREATORS[b.type]();
+          b.baseScale = b.mesh.scale.x;
+          b.mesh.position.copy(pos);
+          b.mesh.rotation.y = rotY;
+          b.mesh.scale.set(b.baseScale, 0.01, b.baseScale);
+          scene.add(b.mesh);
+        }
+      });
+    }
+
+    if(t<1) requestAnimationFrame(flip);
+    else {
+      items.forEach(b=>{
+        b.mesh.scale.set(b.baseScale, b.baseScale, b.baseScale);
+        b.mesh.rotation.y = Math.random() * Math.PI * 2;
+      });
+      animating=false;
+    }
+  }
+  requestAnimationFrame(flip);
+});
+
+// ============ OVERLAY / RESET ============
+function showOverlay(t,m){gameOver=true;document.getElementById('overlay-title').textContent=t;
+  document.getElementById('overlay-msg').textContent=m;document.getElementById('overlay').classList.add('show');}
+document.getElementById('restart-btn').addEventListener('click',()=>{
+  document.getElementById('overlay').classList.remove('show'); resetGame();});
+
+document.getElementById('guide-start-btn').addEventListener('click',()=>{
+  document.getElementById('guide-overlay').classList.remove('show');
+});
+
+function resetGame(){
+  blocks.forEach(b=>scene.remove(b.mesh)); blocks=[];
+  slots=new Array(MAX_SLOTS).fill(null); slotCount=0;
+  shufflesLeft=MAX_SHUFFLES; animating=false; gameOver=false;
+  document.getElementById('shuffle-count').textContent=MAX_SHUFFLES;
+  document.getElementById('shuffle-btn').disabled=false;
+  renderSlots(); generateLayout();
+}
+
+// ============ LOOP ============
+const clock = new THREE.Clock();
+// Dynamic camera — slowly follows top of stack
+const CAM_LERP = 0.008; // very gentle
+const CAM_HEIGHT_ABOVE_TOP = 7.5;
+const lookTarget = new THREE.Vector3(0, 2, 1);
+
+function updateCamera() {
+  let topY = 0;
+  for (const b of blocks) if (!b.removed) topY = Math.max(topY, b.baseY);
+  const targetCamY = topY + CAM_HEIGHT_ABOVE_TOP;
+  const targetLookY = Math.max(0, topY - 1);
+  // Only apply if change is meaningful — avoids tiny jitter
+  if (Math.abs(targetCamY - camera.position.y) > 0.05) {
+    camera.position.y += (targetCamY - camera.position.y) * CAM_LERP;
+  }
+  if (Math.abs(targetLookY - lookTarget.y) > 0.05) {
+    lookTarget.y += (targetLookY - lookTarget.y) * CAM_LERP;
+  }
+  camera.lookAt(lookTarget);
+}
+
+(function animate(){
+  requestAnimationFrame(animate);
+  applyGravity(Math.min(clock.getDelta(),0.05));
+  updateHover(); updatePigBounce(clock.getElapsedTime());
+  updateCamera();
+  renderer.render(scene, camera);
+})();
+
+window.addEventListener('resize',()=>{
+  const w=window.innerWidth, h=window.innerHeight;
+  camera.aspect=w/h; camera.updateProjectionMatrix();
+  renderer.setSize(w,h);
+});
+
+generateLayout();
+</script>
+</body>
+</html>
