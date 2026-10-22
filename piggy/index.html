@@ -2,11 +2,13 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>抓小猪 - 3D三消游戏</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Microsoft YaHei', sans-serif; }
+  html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Microsoft YaHei', sans-serif; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  /* 槽位尺寸：桌面 56px，窄屏按宽度缩小，保证 7 个槽位 + 洗牌按钮一行放得下 */
+  :root { --slot: 56px; --gap: 8px; }
 
   #container {
     position: absolute;
@@ -30,25 +32,25 @@
 
   #slot-bar {
     position: absolute; bottom: 0; left: 0; right: 0;
-    display: flex; justify-content: center; align-items: center; gap: 8px;
-    padding: 16px;
+    display: flex; justify-content: center; align-items: center; gap: var(--gap);
+    padding: 16px; padding-bottom: max(16px, env(safe-area-inset-bottom));
     background: linear-gradient(to top, rgba(255,240,230,0.95), rgba(255,240,230,0.7));
     backdrop-filter: blur(8px); z-index: 10;
   }
   .slot {
-    width: 56px; height: 56px; border-radius: 12px;
+    width: var(--slot); height: var(--slot); border-radius: 12px; flex: none;
     background: #fff; border: 2px solid #f0c0a0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 32px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    font-size: calc(var(--slot) * 0.57); box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   }
   .slot.filled { border-color: #e8a080; background: #fff8f0; }
   .slot.match-anim { animation: slotPop 0.3s ease-out; }
   @keyframes slotPop { 0%{transform:scale(1)} 50%{transform:scale(1.2)} 100%{transform:scale(0);opacity:0} }
 
   #shuffle-btn {
-    margin-left: 16px; width: 56px; height: 56px; border-radius: 12px;
+    margin-left: calc(var(--gap) * 2); width: var(--slot); height: var(--slot); border-radius: 12px; flex: none;
     background: linear-gradient(135deg, #ffb6c1, #ff8fa3);
-    border: none; font-size: 24px; cursor: pointer; color: white;
+    border: none; font-size: calc(var(--slot) * 0.43); cursor: pointer; color: white;
     box-shadow: 0 2px 8px rgba(255,140,160,0.4); position: relative;
   }
   #shuffle-btn:hover { transform: scale(1.08); }
@@ -123,6 +125,19 @@
     color: white; cursor: pointer; box-shadow: 0 4px 12px rgba(255,140,160,0.4);
   }
   #restart-btn:hover { transform: scale(1.05); }
+
+  @media (max-width: 600px) {
+    /* 可用宽度 = 屏幕 - 左右内边距 24 - 7 个间隙 - 按钮左边距，均分给 8 个格子 */
+    :root { --gap: 5px; --slot: min(56px, calc((100vw - 24px - 7 * var(--gap) - 2 * var(--gap)) / 8)); }
+    #slot-bar { padding-left: 12px; padding-right: 12px; padding-top: 12px; }
+    .slot, #shuffle-btn { border-radius: 9px; }
+    #title { font-size: 22px; }
+    #pig-status { top: 50px; left: 0; right: 0; text-align: center; font-size: 14px; }
+    #overlay-box { padding: 28px 24px; width: 88%; max-width: 360px; }
+    #overlay-title { font-size: 28px; }
+    #overlay-msg { font-size: 16px; }
+    #guide-box { padding: 28px 22px 22px; }
+  }
 </style>
 </head>
 <body>
@@ -194,6 +209,16 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xfef0e4);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+// 竖屏时水平视角太窄，桌子两边会被裁掉：保证水平视角至少约 40°
+function fitCamera() {
+  const aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = aspect;
+  const minHFov = 40 * Math.PI / 180;
+  const vFovForWidth = 2 * Math.atan(Math.tan(minHFov / 2) / aspect) * 180 / Math.PI;
+  camera.fov = Math.min(80, Math.max(45, vFovForWidth));
+  camera.updateProjectionMatrix();
+}
+fitCamera();
 camera.position.set(0, 11, 4);
 camera.lookAt(0, 2, 1);
 
@@ -737,6 +762,13 @@ function findBlockByHit(hitObj) {
   return null;
 }
 
+// 触屏没有"悬停"：点完后把指针移出画面，避免下一个物体一直保持放大
+let lastPointerType = 'mouse';
+canvas.addEventListener('pointerdown', e => { lastPointerType = e.pointerType; });
+canvas.addEventListener('click', () => {
+  if (lastPointerType !== 'mouse') setTimeout(() => mouse.set(-9, -9), 0);
+});
+
 canvas.addEventListener('click', e => {
   if (animating || gameOver) return;
   if (blocks.some(b => b.falling)) return;
@@ -1069,7 +1101,7 @@ function updateCamera() {
 
 window.addEventListener('resize',()=>{
   const w=window.innerWidth, h=window.innerHeight;
-  camera.aspect=w/h; camera.updateProjectionMatrix();
+  fitCamera();
   renderer.setSize(w,h);
 });
 

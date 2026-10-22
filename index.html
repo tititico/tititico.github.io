@@ -3,13 +3,95 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>tititico</title>
-<meta http-equiv="refresh" content="0; url=./number/">
-<link rel="canonical" href="./number/">
-<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f0d1a;color:#ece6f5;font-family:serif}a{color:#e8c88c}</style>
+<title>tititico 的小项目</title>
+<meta name="description" content="tititico 做的一些网页小玩意儿">
+<style>
+  :root {
+    --bg: #faf6f1;
+    --card: #ffffff;
+    --border: #ece3d8;
+    --text: #2e2620;
+    --muted: #8a7d70;
+    --accent: #d4637a;
+    --shadow: 0 1px 2px rgba(60, 40, 20, 0.05), 0 8px 24px rgba(60, 40, 20, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16131a;
+      --card: #201c25;
+      --border: #332d3a;
+      --text: #eee8f2;
+      --muted: #a39aab;
+      --accent: #f08aa0;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+    line-height: 1.6;
+  }
+  main { max-width: 720px; margin: 0 auto; padding: 72px 16px 48px; }
+  header { margin-bottom: 40px; }
+  h1 { font-size: 32px; font-weight: 700; letter-spacing: 0.02em; }
+  header p { color: var(--muted); margin-top: 6px; }
+
+  .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .card {
+    display: flex; gap: 16px; align-items: flex-start;
+    padding: 20px; border-radius: 16px;
+    background: var(--card); border: 1px solid var(--border); box-shadow: var(--shadow);
+    color: inherit; text-decoration: none;
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .icon {
+    flex: none; width: 52px; height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+  }
+  .icon.number { background: linear-gradient(135deg, #2a2148, #4a3a7a); color: #f3d9a4; font-family: Georgia, serif; font-weight: 700; }
+  .icon.piggy { background: linear-gradient(135deg, #ffe3e8, #ffc4cf); }
+  .card h2 { font-size: 18px; font-weight: 600; }
+  .card p { font-size: 14px; color: var(--muted); margin-top: 2px; }
+  .card .go { font-size: 13px; color: var(--accent); margin-top: 8px; display: inline-block; }
+
+  footer { margin-top: 56px; font-size: 13px; color: var(--muted); }
+  footer a { color: var(--muted); }
+</style>
 </head>
 <body>
-<p>正在跳转… <a href="./number/">点这里进入生命灵数</a></p>
-<script>location.replace("./number/");</script>
+<main>
+  <header>
+    <h1>tititico 的小项目</h1>
+    <p>一些随手做的网页小玩意儿，点开就能玩</p>
+  </header>
+
+  <div class="list">
+    <a class="card" href="./number/">
+      <div class="icon number">7</div>
+      <div>
+        <h2>生命灵数</h2>
+        <p>输入出生日期，算出你的生命灵数、九宫格连线和今年的流年运势。支持中文 / 日本語 / English。</p>
+        <span class="go">打开 →</span>
+      </div>
+    </a>
+    <a class="card" href="./piggy/">
+      <div class="icon piggy">🐷</div>
+      <div>
+        <h2>抓小猪</h2>
+        <p>3D 三消小游戏：消掉桌上堆成小山的甜点，找到藏在最底下的小猪。</p>
+        <span class="go">开始玩 →</span>
+      </div>
+    </a>
+  </div>
+
+  <footer>
+    <a href="https://github.com/tititico">github.com/tititico</a>
+  </footer>
+</main>
 </body>
 </html>
