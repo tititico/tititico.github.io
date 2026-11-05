@@ -55,6 +55,8 @@
   }
   .icon.number { background: linear-gradient(135deg, #2a2148, #4a3a7a); color: #f3d9a4; font-family: Georgia, serif; font-weight: 700; }
   .icon.piggy { background: linear-gradient(135deg, #ffe3e8, #ffc4cf); }
+  .icon.qrcode { background: #eaf1fe; }
+  .icon.qrcode svg { width: 28px; height: 28px; }
   .card h2 { font-size: 18px; font-weight: 600; }
   .card p { font-size: 14px; color: var(--muted); margin-top: 2px; }
   .card .go { font-size: 13px; color: var(--accent); margin-top: 8px; display: inline-block; }
@@ -85,6 +87,16 @@
         <h2>抓小猪</h2>
         <p>3D 三消小游戏：消掉桌上堆成小山的甜点，找到藏在最底下的小猪。</p>
         <span class="go">开始玩 →</span>
+      </div>
+    </a>
+    <a class="card" href="./qrcode/">
+      <div class="icon qrcode" aria-hidden="true">
+        <svg viewBox="0 0 16 16"><path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h2v2H9zM12 9h2v2h-2zM9 12h2v2H9zM12 12h2v2h-2z" fill="#1a1d21"/><path d="M3.5 3.5h2v2h-2zM10.5 3.5h2v2h-2zM3.5 10.5h2v2h-2z" fill="#eaf1fe"/></svg>
+      </div>
+      <div>
+        <h2>二维码生成器</h2>
+        <p>输入链接或文字实时生成二维码，可调颜色、纠错等级，下载 PNG / SVG。纯本地生成，内容不上传。</p>
+        <span class="go">打开 →</span>
       </div>
     </a>
   </div>
