@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三消小游戏</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="app">
+        <h1>三消小游戏</h1>
+
+        <section class="panel" id="setup">
+            <label class="upload-btn">
+                <input type="file" id="image-upload" accept="image/*" multiple>
+                选择图片（3–6 张）
+            </label>
+            <div id="previews" class="previews"></div>
+            <p id="setup-msg" class="msg">不上传图片也可以，直接用默认水果开始</p>
+            <div class="modes" role="radiogroup" aria-label="游戏模式">
+                <label><input type="radio" name="mode" value="endless" checked><span>无尽模式</span></label>
+                <label><input type="radio" name="mode" value="timed"><span>限时 60 秒</span></label>
+            </div>
+            <button id="start-game" class="primary">开始游戏</button>
+        </section>
+
+        <section class="stats">
+            <div class="stat"><span class="label">得分</span><span id="score">0</span></div>
+            <div class="stat"><span class="label">最高</span><span id="best">0</span></div>
+            <div class="stat"><span class="label">步数</span><span id="moves">0</span></div>
+            <div class="stat" id="timer-stat" hidden><span class="label">时间</span><span id="timer">60</span></div>
+            <button id="mute" class="icon-btn" title="音效开关" aria-label="音效开关">🔊</button>
+        </section>
+
+        <div id="board-wrap">
+            <div id="game-board" aria-label="游戏棋盘"></div>
+            <div id="overlay" class="overlay">
+                <div id="overlay-content">选择图片后点击「开始游戏」</div>
+            </div>
+        </div>
+
+        <p class="tip">点击两个相邻方块交换，或直接拖动 / 滑动方块</p>
+    </main>
+    <audio id="remove-audio" src="mixkit-hard-pop-click-2364.wav" preload="auto"></audio>
+    <script src="main.js"></script>
+</body>
+</html>
