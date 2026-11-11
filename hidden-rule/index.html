@@ -107,7 +107,9 @@ button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
   position: relative; background: var(--sheet); border: 1px solid var(--line); border-radius: 10px;
   padding-block: 14px; padding-left: 16px; padding-right: 44px; max-width: 72ch; margin: 0;
   font-size: 14px; line-height: 1.75;
+  display: flex; flex-direction: column; gap: 6px;
 }
+.intro p { margin: 0; }
 .intro b { font-weight: 700; }
 .intro .x {
   position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border: 0; border-radius: 6px;
@@ -279,12 +281,13 @@ button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
     <button class="btn ghost" id="reroll">换一条规则</button>
   </div>
 
-  <p class="intro" id="intro" hidden>
-    这里藏着一条看不见的规则，它决定每张卡片是<b>符合</b>还是<b>不符合</b>。
-    点一张卡片，花 1 次侦查看它的答案，它会被放进右边的证据区。
-    觉得想明白了就去考试：8 张新卡片全部判断对才算破解。侦查次数越少越厉害。
+  <div class="intro" id="intro" hidden>
+    <p>每张卡片都遵循同一条隐藏规则，你的任务就是找出它！</p>
+    <p>点击卡片，消耗 1 次侦查机会，查看它是「符合」还是「不符合」。查看过的卡片会放进证据区。</p>
+    <p>找到规律后，就可以挑战考试！8 张新卡片全部判断正确，即可通关。</p>
+    <p><b>侦查次数越少，成绩越好！</b></p>
     <button class="x" id="intro-x" aria-label="关闭说明">×</button>
-  </p>
+  </div>
 
   <main class="desk">
     <section class="board-wrap">
