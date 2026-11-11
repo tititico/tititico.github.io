@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>暗规则</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: an inspection desk on graph paper. Left: unknown cards to probe. Right: two evidence trays (是 / 否). Seals mark every verdict. */
+:root {
+  --paper: #E6EAEE;
+  --sheet: #F5F7F9;
+  --card: #FCFDFE;
+  --ink: #17202A;
+  --muted: #5A6672;
+  --line: #C6CED6;
+  --grid: rgba(23, 32, 42, 0.055);
+  --seal: #C2362B;
+  --seal-ink: #FFF6F3;
+  --focus: #2D64C8;
+  --shadow: rgba(23, 32, 42, 0.14);
+  --scrim: rgba(18, 24, 31, 0.55);
+  --c-r: #D8452F;
+  --c-b: #2D64C8;
+  --c-y: #DE9E10;
+  --c-g: #22905A;
+  --f-display: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --f-body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #11151A; --sheet: #191E25; --card: #212730; --ink: #E7EAEE; --muted: #98A2AD;
+    --line: #2E3640; --grid: rgba(231, 234, 238, 0.04); --seal: #E0574A; --seal-ink: #1A0B09;
+    --focus: #6B98F2; --shadow: rgba(0, 0, 0, 0.45); --scrim: rgba(0, 0, 0, 0.65);
+    --c-r: #F0644E; --c-b: #5E90F2; --c-y: #F2BA36; --c-g: #3EBC79;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #11151A; --sheet: #191E25; --card: #212730; --ink: #E7EAEE; --muted: #98A2AD;
+  --line: #2E3640; --grid: rgba(231, 234, 238, 0.04); --seal: #E0574A; --seal-ink: #1A0B09;
+  --focus: #6B98F2; --shadow: rgba(0, 0, 0, 0.45); --scrim: rgba(0, 0, 0, 0.65);
+  --c-r: #F0644E; --c-b: #5E90F2; --c-y: #F2BA36; --c-g: #3EBC79;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body { margin: 0; }
+body {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.6;
+}
+button { font-family: inherit; }
+button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.app {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding-block: 20px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* header */
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px 20px; }
+.brand { display: flex; flex-direction: column; gap: 2px; }
+.brand h1 {
+  margin: 0; font-family: var(--f-display); font-weight: 900;
+  font-size: clamp(36px, 6vw, 52px); line-height: 1.1; letter-spacing: 0.04em;
+  display: flex; align-items: center; gap: 0.12em;
+}
+.logo-seal {
+  display: inline-grid; place-items: center; width: 1.12em; height: 1.12em;
+  background: var(--seal); color: var(--seal-ink); border-radius: 0.1em;
+  box-shadow: inset 0 0 0 0.05em var(--seal), inset 0 0 0 0.09em var(--seal-ink);
+  transform: rotate(-5deg); font-size: 0.86em;
+}
+.tag { font-family: var(--f-mono); font-size: 13px; color: var(--muted); letter-spacing: 0.06em; }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--sheet); }
+.seg button {
+  border: 0; background: transparent; color: var(--muted); cursor: pointer;
+  padding: 6px 16px; border-radius: 999px; font-size: 14px; font-weight: 500;
+}
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.seg.small button { padding: 4px 12px; font-size: 13px; }
+
+.pracbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.pracbar .label { color: var(--muted); font-size: 14px; }
+
+.intro {
+  position: relative; background: var(--sheet); border: 1px solid var(--line); border-radius: 10px;
+  padding-block: 14px; padding-left: 16px; padding-right: 44px; max-width: 72ch; margin: 0;
+  font-size: 14px; line-height: 1.75;
+}
+.intro b { font-weight: 700; }
+.intro .x {
+  position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border: 0; border-radius: 6px;
+  background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; line-height: 1;
+}
+
+/* desk */
+.desk { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 780px) { .desk { grid-template-columns: minmax(0, 1fr); } }
+
+.board-wrap { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.board-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.board-head h2 { margin: 0; font-family: var(--f-display); font-size: 20px; font-weight: 700; }
+.board-head p { margin: 0; font-size: 13px; color: var(--muted); }
+.counter { display: flex; align-items: baseline; gap: 6px; }
+.counter b {
+  font-family: var(--f-mono); font-weight: 700; font-size: 40px; line-height: 1;
+  font-variant-numeric: tabular-nums; display: inline-block;
+}
+.counter b.bump { animation: bump 0.3s ease-out; }
+.counter small { color: var(--muted); font-size: 13px; }
+
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; position: relative; }
+.card {
+  appearance: none; aspect-ratio: 1; max-width: 100%; background: var(--card); border: 1px solid var(--line);
+  border-radius: 8px; padding: 5%; cursor: pointer; position: relative; color: var(--ink);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card svg { width: 100%; height: 100%; display: block; }
+.card:hover:not(.probed) { transform: translateY(-2px); box-shadow: 0 6px 14px var(--shadow); }
+.card.probed { cursor: default; }
+.card.enter { animation: enter 0.35s ease-out; }
+
+.stamp {
+  position: absolute; inset: 20%; display: grid; place-items: center; border-radius: 6px;
+  font-family: var(--f-display); font-weight: 900; font-size: min(34px, 7vw); line-height: 1;
+  transform: rotate(-12deg); animation: stamp 0.3s cubic-bezier(0.2, 1.4, 0.4, 1) both; pointer-events: none;
+}
+.stamp.yes { background: var(--seal); color: var(--seal-ink); box-shadow: inset 0 0 0 3px var(--seal), inset 0 0 0 5px var(--seal-ink); }
+.stamp.no { background: var(--card); color: var(--ink); border: 3px solid var(--ink); }
+
+.board-lock {
+  position: absolute; inset: -4px; border-radius: 12px; display: grid; place-items: center; text-align: center;
+  background: color-mix(in srgb, var(--paper) 84%, transparent); backdrop-filter: blur(3px); padding: 16px;
+}
+.board-lock div { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.board-lock p { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: 20px; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn {
+  font-size: 15px; font-weight: 700; padding: 11px 18px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--ink); background: transparent; color: var(--ink);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.btn.primary { background: var(--ink); color: var(--paper); }
+.btn.primary:hover:not(:disabled) { background: var(--seal); border-color: var(--seal); color: var(--seal-ink); }
+.btn.ghost { border-color: var(--line); color: var(--muted); font-weight: 500; }
+.btn.ghost:hover { color: var(--ink); border-color: var(--ink); }
+.btn.ghost.warn { color: var(--seal); border-color: var(--seal); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* evidence */
+.evidence { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; min-width: 0; }
+.tray {
+  background: var(--sheet); border: 1px solid var(--line); border-radius: 10px; padding: 12px;
+  display: flex; flex-direction: column; gap: 10px; min-height: 220px; min-width: 0;
+}
+.tray h3 { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; }
+.tray h3 .n { margin-left: auto; font-family: var(--f-mono); font-size: 13px; color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+.chip {
+  display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 4px;
+  font-family: var(--f-display); font-weight: 900; font-size: 14px; transform: rotate(-6deg);
+}
+.chip.yes { background: var(--seal); color: var(--seal-ink); }
+.chip.no { border: 2px solid var(--ink); color: var(--ink); }
+.tray-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.mini { width: 52px; aspect-ratio: 1; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 3px; }
+.mini svg { width: 100%; height: 100%; display: block; }
+.mini.pop { animation: pop 0.5s ease-out; border-color: var(--ink); }
+@media (max-width: 480px) { .mini { width: 42px; } }
+
+/* sheets */
+.sheet {
+  position: fixed; inset: 0; z-index: 50; background: var(--scrim); display: grid; place-items: center; overflow-y: auto;
+  padding-top: max(16px, env(safe-area-inset-top, 0px)); padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.panel {
+  background: var(--sheet); color: var(--ink); border: 1px solid var(--line); border-radius: 14px;
+  width: min(700px, 100%); padding: 24px; display: flex; flex-direction: column; gap: 16px;
+  box-shadow: 0 24px 60px var(--shadow); animation: enter 0.25s ease-out;
+}
+.panel h2 { margin: 0; font-family: var(--f-display); font-weight: 900; font-size: 26px; text-wrap: balance; }
+.panel p.lead { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.75; max-width: 62ch; }
+.panel-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.panel-foot .status { font-size: 14px; color: var(--muted); }
+.panel-foot .status.bad { color: var(--seal); font-weight: 700; }
+.panel-foot .btns { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.exam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.ecard { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.ecard .eimg { aspect-ratio: 1; position: relative; max-width: 100%; }
+.ecard .eimg svg { width: 100%; height: 100%; display: block; }
+.ecard .eimg .stamp { inset: 24%; font-size: 26px; }
+.ecard.wrong { border-color: var(--seal); box-shadow: 0 0 0 2px var(--seal); }
+.ecard.right { opacity: 0.7; }
+.choice { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ch {
+  padding: 7px 0; font-size: 14px; font-weight: 500; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--line); background: transparent; color: var(--ink);
+}
+.ch.yes.on { background: var(--seal); border-color: var(--seal); color: var(--seal-ink); font-weight: 700; }
+.ch.no.on { background: var(--ink); border-color: var(--ink); color: var(--paper); font-weight: 700; }
+.ch:disabled { cursor: default; }
+
+.result-top { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.seal-big {
+  flex: none; width: 96px; height: 96px; display: grid; grid-template-columns: 1fr 1fr; place-items: center;
+  font-family: var(--f-display); font-weight: 900; font-size: 34px; line-height: 1; border-radius: 8px;
+  transform: rotate(-8deg); animation: stamp 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) both; padding: 10px;
+}
+.seal-big.win { background: var(--seal); color: var(--seal-ink); box-shadow: inset 0 0 0 4px var(--seal), inset 0 0 0 7px var(--seal-ink); }
+.seal-big.gave { border: 4px solid var(--ink); color: var(--ink); }
+.reveal { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 260px; }
+.reveal .k { font-size: 12px; letter-spacing: 0.12em; color: var(--muted); }
+.reveal .v { font-family: var(--f-display); font-weight: 700; font-size: clamp(21px, 4vw, 28px); line-height: 1.35; text-wrap: balance; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.stats div { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.stats dt { font-size: 12px; color: var(--muted); }
+.stats dd { margin: 0; font-family: var(--f-mono); font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums; }
+.stats dd.t { font-family: var(--f-display); font-size: 20px; }
+.share { display: flex; flex-direction: column; gap: 8px; }
+.share pre {
+  margin: 0; font-family: var(--f-mono); font-size: 14px; line-height: 1.6; background: var(--card);
+  border: 1px dashed var(--line); border-radius: 8px; padding: 12px; white-space: pre-wrap; word-break: break-all; user-select: all;
+}
+.next { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+@keyframes stamp { from { transform: rotate(-12deg) scale(1.9); opacity: 0; } to { opacity: 1; } }
+@keyframes enter { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
+@keyframes pop { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: none; } }
+@keyframes bump { 50% { transform: scale(1.25); color: var(--seal); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1><span class="logo-seal">暗</span>规则</h1>
+      <span class="tag" id="tag">每日 #1</span>
+    </div>
+    <div class="seg" role="group" aria-label="模式">
+      <button id="m-daily" aria-pressed="true">每日挑战</button>
+      <button id="m-prac" aria-pressed="false">练习</button>
+    </div>
+  </header>
+
+  <div class="pracbar" id="pracbar" hidden>
+    <span class="label">难度</span>
+    <div class="seg small" role="group" aria-label="难度" id="diffs">
+      <button data-d="easy" aria-pressed="false">简单</button>
+      <button data-d="mid" aria-pressed="true">中等</button>
+      <button data-d="hard" aria-pressed="false">困难</button>
+    </div>
+    <button class="btn ghost" id="reroll">换一条规则</button>
+  </div>
+
+  <p class="intro" id="intro" hidden>
+    这里藏着一条看不见的规则，它决定每张卡片是<b>符合</b>还是<b>不符合</b>。
+    点一张卡片，花 1 次侦查看它的答案，它会被放进右边的证据区。
+    觉得想明白了就去考试：8 张新卡片全部判断对才算破解。侦查次数越少越厉害。
+    <button class="x" id="intro-x" aria-label="关闭说明">×</button>
+  </p>
+
+  <main class="desk">
+    <section class="board-wrap">
+      <div class="board-head">
+        <div>
+          <h2>待查卡片</h2>
+          <p>点一张，看它符不符合规则</p>
+        </div>
+        <div class="counter"><b id="probes">0</b><small>次侦查</small></div>
+      </div>
+      <div class="board" id="board"></div>
+      <div class="actions">
+        <button class="btn primary" id="exam-btn">我知道规则了，去考试</button>
+        <button class="btn ghost" id="giveup">看答案</button>
+      </div>
+    </section>
+
+    <section class="evidence" aria-label="证据区">
+      <div class="tray">
+        <h3><span class="chip yes">是</span>符合<span class="n" id="ny">0</span></h3>
+        <div class="tray-grid" id="ev-yes"></div>
+      </div>
+      <div class="tray">
+        <h3><span class="chip no">否</span>不符合<span class="n" id="nn">0</span></h3>
+        <div class="tray-grid" id="ev-no"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="sheet" id="exam" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="exam-h">
+    <h2 id="exam-h">考试</h2>
+    <p class="lead">下面是 8 张新卡片，逐张判断它符不符合规则。全部判断对就算破解；错一张，侦查次数 +3，这 8 张会带着正确答案放进证据区。</p>
+    <div class="exam-grid" id="exam-grid"></div>
+    <div class="panel-foot">
+      <span class="status" id="exam-status">已判断 0 / 8</span>
+      <div class="btns">
+        <button class="btn ghost" id="exam-back">先回去再查查</button>
+        <button class="btn primary" id="exam-submit" disabled>交卷</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="result" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="res-h" id="result-panel"></div>
+</div>
+
+<script>
+(() => {
+  /* ---------- data ---------- */
+  const SHAPES = ["circle", "tri", "sq", "hex"];
+  const CORNERS = { circle: 0, tri: 3, sq: 4, hex: 6 };
+  const SHAPE_NAME = { circle: "圆形", tri: "三角形", sq: "方形", hex: "六边形" };
+  const COLORS = ["r", "b", "y", "g"];
+  const COLOR_NAME = { r: "红色", b: "蓝色", y: "黄色", g: "绿色" };
+  const DIFF_NAME = { easy: "简单", mid: "中等", hard: "困难" };
+  const warm = t => t.color === "r" || t.color === "y";
+
+  const RULES = [
+    { id: "red", d: "easy", text: "红色的", f: t => t.color === "r" },
+    { id: "circle", d: "easy", text: "圆形", f: t => t.shape === "circle" },
+    { id: "solid", d: "easy", text: "实心的", f: t => t.fill },
+    { id: "big", d: "easy", text: "大的", f: t => t.big },
+    { id: "one", d: "easy", text: "只有一个图形", f: t => t.n === 1 },
+    { id: "notblue", d: "easy", text: "不是蓝色的", f: t => t.color !== "b" },
+    { id: "angled", d: "easy", text: "有角的（不是圆形）", f: t => t.shape !== "circle" },
+
+    { id: "redOrCircle", d: "mid", text: "红色的，或者是圆形", f: t => t.color === "r" || t.shape === "circle" },
+    { id: "bigSolid", d: "mid", text: "又大又实心", f: t => t.big && t.fill },
+    { id: "warm", d: "mid", text: "暖色（红色或黄色）", f: warm },
+    { id: "odd", d: "mid", text: "图形个数是奇数（1 个或 3 个）", f: t => t.n % 2 === 1 },
+    { id: "corners4", d: "mid", text: "角多于 3 个（方形或六边形）", f: t => CORNERS[t.shape] > 3 },
+    { id: "hollowOrSmall", d: "mid", text: "空心的，或者是小的", f: t => !t.fill || !t.big },
+    { id: "multiNotGreen", d: "mid", text: "至少两个图形，并且不是绿色", f: t => t.n >= 2 && t.color !== "g" },
+    { id: "triOrSq", d: "mid", text: "三角形或方形", f: t => t.shape === "tri" || t.shape === "sq" },
+    { id: "yellowOr3", d: "mid", text: "黄色的，或者正好有 3 个图形", f: t => t.color === "y" || t.n === 3 },
+
+    { id: "redSolid", d: "hard", text: "如果是红色，就必须是实心的", f: t => t.color !== "r" || t.fill },
+    { id: "match", d: "hard", text: "大小和填充对得上：大的实心，小的空心", f: t => t.fill === t.big },
+    { id: "even", d: "hard", text: "角的个数是偶数（圆形算 0 个）", f: t => CORNERS[t.shape] % 2 === 0 },
+    { id: "total8", d: "hard", text: "所有图形的角加起来至少 8 个", f: t => CORNERS[t.shape] * t.n >= 8 },
+    { id: "twoOf3", d: "hard", text: "红色、实心、大，这三项正好满足两项", f: t => (t.color === "r") + t.fill + t.big === 2 },
+    { id: "coolCircle", d: "hard", text: "冷色的圆形，或者暖色的非圆形", f: t => !warm(t) === (t.shape === "circle") },
+    { id: "hollowMany", d: "hard", text: "如果是空心的，就至少有两个图形", f: t => t.fill || t.n >= 2 },
+  ];
+  /* ---------- generated two-attribute rules ----------
+     Atoms are single-attribute facts. Pairs of atoms from different attribute
+     groups are combined with 并且 / 或者 / 如果…就 / 正好一个 / 同真同假,
+     with either side optionally negated. Rules with identical truth tables
+     (over all 192 possible cards) are merged, keeping the plainest wording. */
+  const ATOMS = [
+    { id: "r", g: "c", p: "是红色的", n: "不是红色的", f: t => t.color === "r" },
+    { id: "b", g: "c", p: "是蓝色的", n: "不是蓝色的", f: t => t.color === "b" },
+    { id: "y", g: "c", p: "是黄色的", n: "不是黄色的", f: t => t.color === "y" },
+    { id: "g", g: "c", p: "是绿色的", n: "不是绿色的", f: t => t.color === "g" },
+    { id: "wm", g: "c", p: "是暖色（红或黄）", n: "是冷色（蓝或绿）", nat: true, f: warm },
+    { id: "ci", g: "s", p: "是圆形", n: "不是圆形", f: t => t.shape === "circle" },
+    { id: "tr", g: "s", p: "是三角形", n: "不是三角形", f: t => t.shape === "tri" },
+    { id: "sq", g: "s", p: "是方形", n: "不是方形", f: t => t.shape === "sq" },
+    { id: "hx", g: "s", p: "是六边形", n: "不是六边形", f: t => t.shape === "hex" },
+    { id: "c4", g: "s", p: "角多于 3 个", n: "角不超过 3 个", nat: true, f: t => CORNERS[t.shape] > 3 },
+    { id: "so", g: "f", p: "是实心的", n: "是空心的", nat: true, f: t => t.fill },
+    { id: "bg", g: "z", p: "是大的", n: "是小的", nat: true, f: t => t.big },
+    { id: "n1", g: "n", p: "只有 1 个图形", n: "不止 1 个图形", f: t => t.n === 1 },
+    { id: "n3", g: "n", p: "正好 3 个图形", n: "不是 3 个图形", f: t => t.n === 3 },
+    { id: "od", g: "n", p: "图形个数是奇数", n: "图形个数是偶数", nat: true, f: t => t.n % 2 === 1 },
+    { id: "t8", g: "t", p: "所有角加起来至少 8 个", n: "所有角加起来不到 8 个", nat: true, f: t => CORNERS[t.shape] * t.n >= 8 },
+  ];
+  // "total corners" already depends on shape and count, so don't pair it with those
+  const NO_MIX = { t: ["s", "n"] };
+  const compatible = (a, b) => a.g !== b.g && !(NO_MIX[a.g] || []).includes(b.g) && !(NO_MIX[b.g] || []).includes(a.g);
+
+  const ALL_TILES = [];
+  for (const shape of SHAPES) for (const color of COLORS) for (const fill of [true, false])
+    for (const big of [true, false]) for (let n = 1; n <= 3; n++) ALL_TILES.push({ shape, color, fill, big, n });
+  const keyOf = f => ALL_TILES.map(t => (f(t) ? 1 : 0)).join("");
+
+  function genRules() {
+    const taken = new Set(RULES.map(r => keyOf(r.f)));
+    ATOMS.forEach(a => { taken.add(keyOf(a.f)); taken.add(keyOf(t => !a.f(t))); });
+    const best = new Map();
+    const offer = c => {
+      const key = keyOf(c.f);
+      if (taken.has(key)) return;
+      const cur = best.get(key);
+      if (!cur || c.score < cur.score) best.set(key, c);
+    };
+    const lit = (a, neg) => ({ txt: neg ? a.n : a.p, f: neg ? t => !a.f(t) : a.f, tag: (neg ? "~" : "") + a.id, neg });
+    for (const a of ATOMS) for (const b of ATOMS) {
+      if (a === b || !compatible(a, b)) continue;
+      for (const na of [false, true]) for (const nb of [false, true]) {
+        // "是空心的" or "是小的" reads as a plain fact, so natural opposites don't count as negations
+        const A = lit(a, na), B = lit(b, nb), tags = A.tag + ":" + B.tag;
+        const negs = (na && !a.nat) + (nb && !b.nat);
+        offer({ id: "and:" + tags, k: "and", negs, score: negs * 10 + 0, text: `${A.txt}，并且${B.txt}`, f: t => A.f(t) && B.f(t) });
+        offer({ id: "or:" + tags, k: "or", negs, score: negs * 10 + 1, text: `${A.txt}，或者${B.txt}`, f: t => A.f(t) || B.f(t) });
+        offer({ id: "if:" + tags, k: "if", negs, score: negs * 10 + 2, text: `如果${A.txt}，就必须${B.txt}`, f: t => !A.f(t) || B.f(t) });
+      }
+      const A = lit(a, false), B = lit(b, false), tags = A.tag + ":" + B.tag;
+      offer({ id: "xor:" + tags, k: "xor", negs: 0, score: 3, text: `「${A.txt}」和「${B.txt}」正好满足其中一个`, f: t => A.f(t) !== B.f(t) });
+      offer({ id: "iff:" + tags, k: "iff", negs: 0, score: 4, text: `「${A.txt}」和「${B.txt}」要么都满足，要么都不满足`, f: t => A.f(t) === B.f(t) });
+    }
+    const out = [];
+    for (const [key, c] of best) {
+      const share = key.split("").filter(x => x === "1").length / key.length;
+      if (share < 0.15 || share > 0.85) continue;
+      const d = (c.k === "and" || c.k === "or") && c.negs <= 1 ? "mid" : "hard";
+      out.push({ id: c.id, d, text: c.text, f: c.f });
+    }
+    return out;
+  }
+  RULES.push(...genRules());
+  const ruleById = id => RULES.find(r => r.id === id);
+
+  /* ---------- rng (serializable mulberry32) ---------- */
+  function rnd(R) {
+    R.s = (R.s + 0x6D2B79F5) | 0;
+    let t = Math.imul(R.s ^ (R.s >>> 15), 1 | R.s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+  const pickR = (R, arr) => arr[Math.floor(rnd(R) * arr.length)];
+
+  /* ---------- storage ---------- */
+  const store = {
+    get(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  };
+
+  /* ---------- daily ---------- */
+  function todayN() {
+    const now = new Date();
+    const a = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const e = new Date(2026, 10, 11);
+    return Math.max(1, Math.round((a - e) / 864e5) + 1);
+  }
+  // Fixed schedule: shuffle mid and hard rules separately, then interleave them
+  // evenly so hard days are spread out instead of clumping together.
+  const DAILY_POOL = (() => {
+    const R = { s: 20261111 };
+    const shuffled = d => {
+      const p = RULES.filter(r => r.d === d).map(r => r.id);
+      for (let i = p.length - 1; i > 0; i--) { const j = Math.floor(rnd(R) * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
+      return p;
+    };
+    const mid = shuffled("mid"), hard = shuffled("hard"), out = [];
+    let i = 0, j = 0;
+    while (i < mid.length || j < hard.length) {
+      const midBehind = i / mid.length <= j / hard.length;
+      if (i < mid.length && (midBehind || j >= hard.length)) out.push(mid[i++]);
+      else out.push(hard[j++]);
+    }
+    return out;
+  })();
+  const dailyKey = n => "agz-d-" + n;
+
+  /* ---------- game state ---------- */
+  let games = { daily: null, prac: null };
+  let S = null;
+  let pracDiff = store.get("agz-diff") || "mid";
+  const busy = new Set();
+
+  const rule = () => ruleById(S.ruleId);
+  function randTile(R) {
+    return { shape: pickR(R, SHAPES), color: pickR(R, COLORS), fill: rnd(R) < 0.5, big: rnd(R) < 0.5, n: 1 + Math.floor(rnd(R) * 3) };
+  }
+  function genTile(want) {
+    const r = rule(); let t;
+    for (let i = 0; i < 400; i++) { t = randTile(S.R); if (r.f(t) === want) break; }
+    return t;
+  }
+  function newTile(want) { const t = genTile(want); t.id = S.uid++; return t; }
+  const coin = () => rnd(S.R) < 0.5;
+
+  function fresh(mode) {
+    const daily = todayN();
+    let ruleId, seed;
+    if (mode === "daily") {
+      ruleId = DAILY_POOL[(daily - 1) % DAILY_POOL.length];
+      seed = daily * 7919 + 101;
+    } else {
+      const prev = games.prac && games.prac.ruleId;
+      const pool = RULES.filter(r => r.d === pracDiff && r.id !== prev);
+      ruleId = pool[Math.floor(Math.random() * pool.length)].id;
+      seed = Math.floor(Math.random() * 2147483647);
+    }
+    S = { mode, daily, ruleId, R: { s: seed }, uid: 1, board: [], yes: [], no: [], probes: 0, exams: 0, seq: [], status: "play", exam: null, last: [] };
+    S.yes.push(newTile(true));
+    S.no.push(newTile(false));
+    for (let i = 0; i < 12; i++) S.board.push(newTile(coin()));
+    games[mode] = S;
+    return S;
+  }
+  function save() { if (S.mode === "daily") store.set(dailyKey(S.daily), S); }
+
+  /* ---------- drawing ---------- */
+  const POS = { 1: [[50, 50]], 2: [[30, 50], [70, 50]], 3: [[30, 33], [70, 33], [50, 70]] };
+  function poly(cx, cy, R, start, k) {
+    const pts = [];
+    for (let i = 0; i < k; i++) {
+      const a = (start + (360 / k) * i) * Math.PI / 180;
+      pts.push((cx + R * Math.cos(a)).toFixed(1) + "," + (cy + R * Math.sin(a)).toFixed(1));
+    }
+    return pts.join(" ");
+  }
+  function tileSVG(t) {
+    const r = t.big ? 16 : 9;
+    const col = "var(--c-" + t.color + ")";
+    const sw = t.big ? 4.5 : 3.2;
+    const st = t.fill ? `fill:${col}` : `fill:none;stroke:${col};stroke-width:${sw};stroke-linejoin:round`;
+    const parts = POS[t.n].map(([x, y]) => {
+      if (t.shape === "circle") return `<circle cx="${x}" cy="${y}" r="${r}" style="${st}"/>`;
+      if (t.shape === "tri") return `<polygon points="${poly(x, y + r * 0.22, r * 1.32, -90, 3)}" style="${st}"/>`;
+      if (t.shape === "sq") return `<polygon points="${poly(x, y, r * 1.22, 45, 4)}" style="${st}"/>`;
+      return `<polygon points="${poly(x, y, r * 1.12, -90, 6)}" style="${st}"/>`;
+    });
+    return `<svg viewBox="0 0 100 100" aria-hidden="true">${parts.join("")}</svg>`;
+  }
+  const label = t => `${t.n}个${t.big ? "大" : "小"}${t.fill ? "实心" : "空心"}${COLOR_NAME[t.color]}${SHAPE_NAME[t.shape]}`;
+  const stampHTML = ok => `<span class="stamp ${ok ? "yes" : "no"}">${ok ? "是" : "否"}</span>`;
+
+  /* ---------- dom ---------- */
+  const $ = s => document.querySelector(s);
+  const boardEl = $("#board");
+
+  function cardHTML(t, i, enter) {
+    return `<button class="card${enter ? " enter" : ""}" data-i="${i}" aria-label="${label(t)}，点击侦查">${tileSVG(t)}</button>`;
+  }
+  function renderBoard() {
+    boardEl.innerHTML = S.board.map((t, i) => cardHTML(t, i, false)).join("") + lockHTML();
+  }
+  function lockHTML() {
+    if (S.status === "play") return "";
+    const msg = S.status === "win" ? (S.mode === "daily" ? "今天的规则已破解" : "已破解") : "规则已揭晓";
+    const next = S.mode === "daily" ? `<button class="btn ghost" data-act="go-prac">去练习</button>` : `<button class="btn ghost" data-act="next">下一条规则</button>`;
+    return `<div class="board-lock"><div><p>${msg}</p><div class="actions"><button class="btn primary" data-act="show-result">查看结果</button>${next}</div></div></div>`;
+  }
+  function miniHTML(t) {
+    return `<div class="mini${S.last.includes(t.id) ? " pop" : ""}" role="img" aria-label="${label(t)}">${tileSVG(t)}</div>`;
+  }
+  function renderEvidence() {
+    $("#ev-yes").innerHTML = S.yes.map(miniHTML).join("");
+    $("#ev-no").innerHTML = S.no.map(miniHTML).join("");
+    $("#ny").textContent = S.yes.length;
+    $("#nn").textContent = S.no.length;
+  }
+  function renderCounter(bump) {
+    const b = $("#probes");
+    b.textContent = S.probes;
+    if (bump) { b.classList.remove("bump"); void b.offsetWidth; b.classList.add("bump"); }
+  }
+  function renderChrome() {
+    $("#tag").textContent = S.mode === "daily" ? `每日 #${S.daily} · ${DIFF_NAME[rule().d]}` : `练习 · ${DIFF_NAME[rule().d]}`;
+    $("#m-daily").setAttribute("aria-pressed", S.mode === "daily");
+    $("#m-prac").setAttribute("aria-pressed", S.mode === "prac");
+    $("#pracbar").hidden = S.mode !== "prac";
+    document.querySelectorAll("#diffs button").forEach(b => b.setAttribute("aria-pressed", b.dataset.d === pracDiff));
+    const playing = S.status === "play";
+    $("#exam-btn").disabled = !playing;
+    $("#giveup").disabled = !playing;
+    resetGiveup();
+  }
+  function renderAll() { renderChrome(); renderBoard(); renderEvidence(); renderCounter(false); }
+
+  /* ---------- probing ---------- */
+  function probe(i) {
+    if (S.status !== "play" || busy.has(i)) return;
+    const t = S.board[i];
+    const ok = rule().f(t);
+    busy.add(i);
+    S.probes++;
+    S.seq.push(ok ? "y" : "n");
+    const card = boardEl.children[i];
+    card.classList.add("probed");
+    card.insertAdjacentHTML("beforeend", stampHTML(ok));
+    renderCounter(true);
+    const g = S;
+    setTimeout(() => {
+      (ok ? g.yes : g.no).unshift(t);
+      g.last = [t.id];
+      g.board[i] = newTileFor(g, coinFor(g));
+      busy.delete(i);
+      if (g !== S) return;
+      save();
+      const el = boardEl.children[i];
+      if (el) el.outerHTML = cardHTML(S.board[i], i, true);
+      renderEvidence();
+    }, 560);
+  }
+  // the timeout may finish after a mode switch; draw from that game's own rng
+  function newTileFor(g, want) { const cur = S; S = g; const t = newTile(want); S = cur; return t; }
+  function coinFor(g) { return rnd(g.R) < 0.5; }
+
+  boardEl.addEventListener("click", e => {
+    const act = e.target.closest("[data-act]");
+    if (act) return handleAct(act.dataset.act);
+    const c = e.target.closest(".card");
+    if (c) probe(+c.dataset.i);
+  });
+
+  /* ---------- exam ---------- */
+  function buildExam() {
+    const r = rule();
+    let best = null, bestScore = -1;
+    for (let k = 0; k < 120; k++) {
+      const wants = [true, true, true, true, false, false, false, false];
+      for (let i = wants.length - 1; i > 0; i--) { const j = Math.floor(rnd(S.R) * (i + 1)); [wants[i], wants[j]] = [wants[j], wants[i]]; }
+      const tiles = wants.map(w => genTile(w));
+      let score = 0;
+      for (const o of RULES) {
+        if (o === r) continue;
+        let d = 0;
+        for (const t of tiles) if (o.f(t) !== r.f(t)) d++;
+        if (d > 0) score += 1 + d * 0.02;
+      }
+      if (score > bestScore) { bestScore = score; best = tiles; }
+    }
+    best.forEach(t => (t.id = S.uid++));
+    return best;
+  }
+  function openExam() {
+    if (S.status !== "play") return;
+    if (!S.exam) { S.exam = { tiles: buildExam(), ans: Array(8).fill(null), graded: false }; save(); }
+    renderExam();
+    $("#exam").hidden = false;
+  }
+  function renderExam() {
+    const ex = S.exam, r = rule();
+    $("#exam-grid").innerHTML = ex.tiles.map((t, i) => {
+      const a = ex.ans[i];
+      const truth = r.f(t);
+      const cls = ex.graded ? ((a === 1) === truth ? " right" : " wrong") : "";
+      const dis = ex.graded ? " disabled" : "";
+      return `<div class="ecard${cls}">
+        <div class="eimg" role="img" aria-label="${label(t)}">${tileSVG(t)}${ex.graded ? stampHTML(truth) : ""}</div>
+        <div class="choice">
+          <button class="ch yes${a === 1 ? " on" : ""}" data-k="${i}" data-a="1" aria-pressed="${a === 1}"${dis}>符合</button>
+          <button class="ch no${a === 0 ? " on" : ""}" data-k="${i}" data-a="0" aria-pressed="${a === 0}"${dis}>不符</button>
+        </div></div>`;
+    }).join("");
+    const done = ex.ans.filter(a => a !== null).length;
+    const st = $("#exam-status"), sub = $("#exam-submit"), back = $("#exam-back");
+    if (ex.graded) {
+      const wrong = ex.tiles.filter((t, i) => (ex.ans[i] === 1) !== r.f(t)).length;
+      st.textContent = `错了 ${wrong} 张，侦查 +3。看看标红的几张，再想想。`;
+      st.className = "status bad";
+      sub.textContent = "放进证据区，继续查";
+      sub.disabled = false;
+      back.hidden = true;
+    } else {
+      st.textContent = `已判断 ${done} / 8`;
+      st.className = "status";
+      sub.textContent = "交卷";
+      sub.disabled = done < 8;
+      back.hidden = false;
+    }
+  }
+  $("#exam-grid").addEventListener("click", e => {
+    const b = e.target.closest(".ch");
+    if (!b || S.exam.graded) return;
+    S.exam.ans[+b.dataset.k] = +b.dataset.a;
+    save();
+    renderExam();
+  });
+  function closeExam() {
+    $("#exam").hidden = true;
+    if (S.exam && S.exam.graded) {
+      const r = rule();
+      S.last = S.exam.tiles.map(t => t.id);
+      S.exam.tiles.forEach(t => (r.f(t) ? S.yes : S.no).unshift(t));
+      S.exam = null;
+      save();
+      renderEvidence();
+    }
+  }
+  $("#exam-submit").addEventListener("click", () => {
+    const ex = S.exam;
+    if (ex.graded) return closeExam();
+    const r = rule();
+    const wrong = ex.tiles.filter((t, i) => (ex.ans[i] === 1) !== r.f(t)).length;
+    S.exams++;
+    if (wrong === 0) {
+      S.seq.push("w");
+      S.status = "win";
+      S.exam = null;
+      save();
+      $("#exam").hidden = true;
+      renderAll();
+      showResult();
+    } else {
+      S.probes += 3;
+      S.seq.push("x");
+      ex.graded = true;
+      save();
+      renderCounter(true);
+      renderExam();
+    }
+  });
+  $("#exam-back").addEventListener("click", closeExam);
+  $("#exam").addEventListener("click", e => { if (e.target.id === "exam") closeExam(); });
+  $("#exam-btn").addEventListener("click", openExam);
+
+  /* ---------- give up ---------- */
+  let giveupArmed = null;
+  function resetGiveup() {
+    clearTimeout(giveupArmed); giveupArmed = null;
+    const b = $("#giveup"); b.textContent = "看答案"; b.classList.remove("warn");
+  }
+  $("#giveup").addEventListener("click", () => {
+    if (S.status !== "play") return;
+    const b = $("#giveup");
+    if (!giveupArmed) {
+      b.textContent = "确定放弃？再点一次";
+      b.classList.add("warn");
+      giveupArmed = setTimeout(resetGiveup, 3000);
+      return;
+    }
+    resetGiveup();
+    S.status = "gave";
+    S.seq.push("g");
+    S.exam = null;
+    save();
+    renderAll();
+    showResult();
+  });
+
+  /* ---------- result ---------- */
+  function rank() {
+    if (S.status === "gave") return "迷途者";
+    const p = S.probes;
+    if (p <= 4) return "读心者";
+    if (p <= 8) return "名侦探";
+    if (p <= 13) return "见习侦探";
+    return "执着的人";
+  }
+  function streak() {
+    const n = todayN();
+    const today = store.get(dailyKey(n));
+    let k = today && today.status === "win" ? n : n - 1, c = 0;
+    while (k >= 1) { const g = store.get(dailyKey(k)); if (g && g.status === "win") { c++; k--; } else break; }
+    return c;
+  }
+  const EMO = { y: "🟩", n: "⬜", x: "🟥", w: "✅", g: "🏳️" };
+  function shareText() {
+    const head = S.mode === "daily" ? `暗规则 每日 #${S.daily}` : `暗规则 练习 · ${DIFF_NAME[rule().d]}`;
+    const line = S.status === "win" ? `🔍 ${S.probes} 次侦查 · 考试 ${S.exams} 次` : `🏳️ 放弃了（侦查 ${S.probes} 次）`;
+    const em = S.seq.map(s => EMO[s]);
+    const rows = [];
+    for (let i = 0; i < em.length; i += 10) rows.push(em.slice(i, i + 10).join(""));
+    return [head, line, ...rows, `称号：${rank()}`].join("\n");
+  }
+  function untilMidnight() {
+    const now = new Date();
+    const m = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const mins = Math.max(0, Math.ceil((m - now) / 60000));
+    return `${Math.floor(mins / 60)} 小时 ${mins % 60} 分`;
+  }
+  let clock = null;
+  function showResult() {
+    const win = S.status === "win";
+    const daily = S.mode === "daily";
+    const seal = win ? `<span>破</span><span>解</span>` : `<span>揭</span><span>晓</span>`;
+    const st = daily && win ? streak() : null;
+    $("#result-panel").innerHTML = `
+      <div class="result-top">
+        <div class="seal-big ${win ? "win" : "gave"}" aria-hidden="true">${seal}</div>
+        <div class="reveal">
+          <h2 id="res-h">${win ? (S.exams === 1 ? "一次考过，漂亮" : "破解成功") : "答案在这里"}</h2>
+          <span class="k">规则是</span>
+          <span class="v">${rule().text}</span>
+        </div>
+      </div>
+      <dl class="stats">
+        <div><dt>侦查次数</dt><dd>${S.probes}</dd></div>
+        <div><dt>${st !== null ? "连续破解" : "考试次数"}</dt><dd>${st !== null ? st + " 天" : S.exams}</dd></div>
+        <div><dt>称号</dt><dd class="t">${rank()}</dd></div>
+      </dl>
+      <div class="share">
+        <pre id="share-text">${shareText()}</pre>
+        <div class="actions"><button class="btn ghost" id="copy">复制成绩</button></div>
+      </div>
+      ${daily ? `<span class="next" id="next">下一条每日规则：${untilMidnight()}后</span>` : ""}
+      <div class="panel-foot">
+        <span></span>
+        <div class="btns">
+          <button class="btn ghost" data-act="close-result">关闭</button>
+          ${daily ? `<button class="btn primary" data-act="go-prac">练习一局</button>` : `<button class="btn primary" data-act="next">下一条规则</button>`}
+        </div>
+      </div>`;
+    $("#result").hidden = false;
+    clearInterval(clock);
+    if (daily) clock = setInterval(() => { const n = $("#next"); if (n) n.textContent = `下一条每日规则：${untilMidnight()}后`; }, 30000);
+  }
+  function closeResult() { $("#result").hidden = true; clearInterval(clock); }
+  $("#result").addEventListener("click", e => {
+    if (e.target.id === "result") return closeResult();
+    if (e.target.id === "copy") {
+      const txt = shareText(), btn = e.target;
+      const fallback = () => {
+        const pre = $("#share-text"); const range = document.createRange(); range.selectNodeContents(pre);
+        const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+        btn.textContent = "已选中，按 Ctrl+C 复制";
+      };
+      try {
+        navigator.clipboard.writeText(txt).then(() => { btn.textContent = "已复制"; }, fallback);
+      } catch (err) { fallback(); }
+      return;
+    }
+    const act = e.target.closest("[data-act]");
+    if (act) handleAct(act.dataset.act);
+  });
+
+  function handleAct(a) {
+    if (a === "show-result") return showResult();
+    if (a === "close-result") return closeResult();
+    if (a === "go-prac") { closeResult(); return switchMode("prac"); }
+    if (a === "next") { closeResult(); fresh("prac"); return renderAll(); }
+  }
+
+  /* ---------- modes ---------- */
+  function loadDaily() {
+    const n = todayN();
+    if (games.daily && games.daily.daily === n) return games.daily;
+    const saved = store.get(dailyKey(n));
+    if (saved && saved.ruleId) { games.daily = saved; return saved; }
+    const cur = S; const g = fresh("daily"); S = cur; return g;
+  }
+  function switchMode(m) {
+    busy.clear();
+    $("#exam").hidden = true;
+    if (m === "daily") S = loadDaily();
+    else S = games.prac || fresh("prac");
+    renderAll();
+    if (m === "daily" && S.status !== "play") showResult();
+  }
+  $("#m-daily").addEventListener("click", () => switchMode("daily"));
+  $("#m-prac").addEventListener("click", () => switchMode("prac"));
+  document.querySelectorAll("#diffs button").forEach(b => b.addEventListener("click", () => {
+    pracDiff = b.dataset.d; store.set("agz-diff", pracDiff);
+    fresh("prac"); renderAll();
+  }));
+  $("#reroll").addEventListener("click", () => { fresh("prac"); renderAll(); });
+
+  document.addEventListener("keydown", e => {
+    if (e.key !== "Escape") return;
+    if (!$("#exam").hidden) closeExam();
+    else if (!$("#result").hidden) closeResult();
+  });
+
+  /* ---------- intro ---------- */
+  if (!store.get("agz-seen")) $("#intro").hidden = false;
+  $("#intro-x").addEventListener("click", () => { $("#intro").hidden = true; store.set("agz-seen", 1); });
+
+  /* ---------- boot ---------- */
+  switchMode("daily");
+})();
+</script>
+</body>
+</html>
